@@ -13,6 +13,8 @@ export interface Product {
   price: number;
   category: string;
   tags?: string[];
+  /** Cloudinary URLs, up to 8 — empty for anything listed before image upload shipped. */
+  images?: string[];
   viewCount?: number;
   createdAt: string;
   seller: Seller | null;
@@ -94,6 +96,18 @@ export async function fetchProducts(
     products: data.products ?? [],
     pagination: data.pagination ?? { page: 1, limit: 24, total: 0, pages: 0 },
   };
+}
+
+/** Single product for the detail page — goes through the existing `/api/products/[id]` proxy. */
+export async function fetchProduct(id: string): Promise<Product | null> {
+  try {
+    const res = await fetch(`/api/products/${id}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.product ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchCategories(): Promise<CategoryCount[]> {

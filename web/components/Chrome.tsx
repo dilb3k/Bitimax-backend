@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { botLink } from '@/lib/api';
 import { Logo, LogoMark } from './Logo';
+import { MobileNav } from './MobileNav';
 
 export function Header() {
   return (
@@ -28,10 +29,11 @@ export function Header() {
             href={botLink()}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-accent px-3.5 py-2 text-sm"
+            className="hidden btn-accent px-3.5 py-2 text-sm sm:inline-flex"
           >
             Botni ochish
           </a>
+          <MobileNav />
         </nav>
       </div>
     </header>

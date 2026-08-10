@@ -29,6 +29,10 @@ export function Catalog() {
   const [sort, setSort] = useState('-createdAt');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [minPriceInput, setMinPriceInput] = useState('');
+  const [maxPriceInput, setMaxPriceInput] = useState('');
+  const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
+  const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +51,18 @@ export function Catalog() {
     return () => clearTimeout(id);
   }, [searchInput]);
 
+  // Same debounce treatment as search — typing a price shouldn't fire a request per keystroke.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const min = parseInt(minPriceInput.replace(/\D/g, ''), 10);
+      const max = parseInt(maxPriceInput.replace(/\D/g, ''), 10);
+      setMinPrice(Number.isFinite(min) && min > 0 ? min : undefined);
+      setMaxPrice(Number.isFinite(max) && max > 0 ? max : undefined);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(id);
+  }, [minPriceInput, maxPriceInput]);
+
   const requestRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async () => {
@@ -58,7 +74,10 @@ export function Catalog() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchProducts({ page, category, search, sort }, controller.signal);
+      const data = await fetchProducts(
+        { page, category, search, sort, minPrice, maxPrice },
+        controller.signal
+      );
       setProducts(data.products);
       setPagination(data.pagination);
     } catch (err) {
@@ -67,7 +86,7 @@ export function Catalog() {
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  }, [page, category, search, sort]);
+  }, [page, category, search, sort, minPrice, maxPrice]);
 
   useEffect(() => {
     load();
@@ -144,6 +163,32 @@ export function Catalog() {
         </div>
       </div>
 
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <label className="text-sm text-muted" htmlFor="min-narx">
+          Narx:
+        </label>
+        <input
+          id="min-narx"
+          type="text"
+          inputMode="numeric"
+          value={minPriceInput}
+          onChange={(event) => setMinPriceInput(event.target.value)}
+          placeholder="min"
+          className="field w-28 py-2 text-sm"
+        />
+        <span className="text-faint">—</span>
+        <input
+          aria-label="Maksimal narx"
+          type="text"
+          inputMode="numeric"
+          value={maxPriceInput}
+          onChange={(event) => setMaxPriceInput(event.target.value)}
+          placeholder="max"
+          className="field w-28 py-2 text-sm"
+        />
+        <span className="text-sm text-faint">so‘m</span>
+      </div>
+
       <div className="mb-8 flex gap-2 overflow-x-auto pb-1">
         <button
           type="button"
@@ -180,10 +225,12 @@ export function Catalog() {
         </div>
       ) : products.length === 0 ? (
         <EmptyState
-          hasFilters={Boolean(search || category)}
+          hasFilters={Boolean(search || category || minPrice || maxPrice)}
           onReset={() => {
             setSearchInput('');
             setCategory('');
+            setMinPriceInput('');
+            setMaxPriceInput('');
             setPage(1);
           }}
         />

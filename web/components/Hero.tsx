@@ -130,7 +130,11 @@ export function RefundPolicy({ exampleAmount = 1_000_000 }: { exampleAmount?: nu
         mumkin — buning uchun jarima to‘lamaysiz.
       </p>
 
-      <div className="mt-6 overflow-x-auto">
+      {/* A horizontally-scrolling table reads as janky on a phone — below `sm` the same rows
+          render as stacked cards instead, matching how `Catalog`'s category chips already
+          handle overflow (scroll) versus how this table used to (also scroll, just worse
+          because every column needed to be visible at once to make sense). */}
+      <div className="mt-6 hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[34rem] border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wider text-faint">
@@ -169,6 +173,27 @@ export function RefundPolicy({ exampleAmount = 1_000_000 }: { exampleAmount?: nu
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-6 space-y-2.5 sm:hidden">
+        {rows.map((row) => (
+          <div key={row.window} className="surface flex items-center justify-between gap-3 p-4">
+            <div>
+              <p className="font-medium text-ink">{row.window}</p>
+              <p className="mt-0.5 text-xs text-muted">{row.note}</p>
+            </div>
+            <div className="text-right">
+              <p
+                className={`tnum text-lg font-bold ${
+                  row.back === 100 ? 'text-ok' : row.back === 0 ? 'text-warn' : 'text-ink'
+                }`}
+              >
+                {row.back}%
+              </p>
+              <p className="tnum text-xs text-faint">{formatUzs((exampleAmount * row.back) / 100)}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
       <p className="mt-4 text-xs leading-relaxed text-faint">

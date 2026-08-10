@@ -2,12 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    // No product image upload flow exists yet (Product.images is currently always empty),
-    // so there is no legitimate need for a wildcard remote pattern. A '**' hostname turns
-    // the Next.js image optimizer into an open image-fetching proxy for any URL a caller
-    // supplies (SSRF / abuse risk) for zero functional benefit today. Add specific trusted
-    // hostnames here once an image upload/CDN flow is built.
-    remotePatterns: [],
+    // Product photos are uploaded through the bot straight to Cloudinary (backend/src/services
+    // /cloudinaryService.ts) — this is the one hostname product images can ever come from, so
+    // it's listed explicitly rather than a wildcard. A '**' hostname would turn the Next.js
+    // image optimizer into an open image-fetching proxy for any URL a caller supplies
+    // (SSRF / abuse risk) for zero functional benefit.
+    remotePatterns: [{ protocol: 'https', hostname: 'res.cloudinary.com' }],
   },
   async rewrites() {
     // Safety-net fallback for any /api/* path without a dedicated route handler in
