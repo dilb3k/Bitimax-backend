@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { botLink } from '@/lib/api';
 
@@ -8,7 +9,7 @@ import { botLink } from '@/lib/api';
  * no replacement — on mobile they were only reachable by manually scrolling. This restores
  * access via a hamburger button that drops down the same links plus the bot CTA.
  */
-export function MobileNav() {
+export function MobileNav({ authed = false }: { authed?: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -41,20 +42,27 @@ export function MobileNav() {
 
       {open && (
         <div className="surface absolute right-0 top-full mt-2 w-48 overflow-hidden py-1 shadow-lg">
-          <a
-            href="#katalog"
+          <Link
+            href="/#katalog"
             onClick={() => setOpen(false)}
             className="block px-4 py-2.5 text-sm text-ink hover:bg-raised"
           >
             Katalog
-          </a>
-          <a
-            href="#qanday"
+          </Link>
+          <Link
+            href="/kod"
             onClick={() => setOpen(false)}
             className="block px-4 py-2.5 text-sm text-ink hover:bg-raised"
           >
-            Qanday ishlaydi
-          </a>
+            Kod bilan sotib olish
+          </Link>
+          <Link
+            href={authed ? '/kabinet' : '/kirish'}
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2.5 text-sm text-ink hover:bg-raised"
+          >
+            {authed ? 'Kabinet' : 'Kirish'}
+          </Link>
           <a
             href={botLink()}
             target="_blank"

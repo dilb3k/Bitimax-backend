@@ -1,5 +1,6 @@
-import { Composer } from 'telegraf';
-import { User } from '../../models/User';
+import { Composer, Scenes } from 'telegraf';
+import mongoose from 'mongoose';
+import { User, IUser } from '../../models/User';
 import { Product } from '../../models/Product';
 import { EscrowHold } from '../../models/EscrowHold';
 import { Transaction } from '../../models/Transaction';
@@ -13,6 +14,7 @@ import { ledgerService, accounts } from '../../services/ledgerService';
 import { adminMenuKeyboard, moderationButtons, payoutButtons } from '../keyboards';
 import { config, isAdminTelegramId } from '../../config';
 import { escapeHtml, formatUzs } from '../../utils/helpers';
+import { bailIfCancelled } from '../wizards/guard';
 
 export const adminHandler = new Composer();
 
@@ -51,9 +53,169 @@ adminHandler.hears('👥 Foydalanuvchilar', async (ctx) => {
       `Sotuvchilar: ${sellers}`,
       `Bloklangan: ${blocked}`,
       `Qaytarish cheklangan: ${flagged}`,
-    ].join('\n')
+    ].join('\n'),
+    {
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [[{ text: '🎚 Rol belgilash', callback_data: 'admin_set_role' }]],
+      },
+    }
   );
 });
+
+// ─── Roles ─────────────────────────────────────────────────────────────────────
+
+export const ROLE_WIZARD = 'admin_set_role';
+
+function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+async function findUserByHandle(handle: string): Promise<IUser | null> {
+  const query = handle.trim().replace(/^@/, '');
+  if (!query) return null;
+  if (/^\d+$/.test(query)) return User.findOne({ telegramId: Number(query) });
+  return User.findOne({ username: new RegExp(`^${escapeRegex(query)}$`, 'i') });
+}
+
+adminHandler.action('admin_set_role', async (ctx) => {
+  if (!(await requireAdmin(ctx))) return void ctx.answerCbQuery('Ruxsat yo‘q');
+  await ctx.answerCbQuery();
+  await (ctx as any).scene?.enter(ROLE_WIZARD);
+});
+
+adminHandler.command('setrole', async (ctx) => {
+  if (!(await requireAdmin(ctx))) return;
+  await (ctx as any).scene?.enter(ROLE_WIZARD);
+});
+
+/**
+ * Grants or changes a user's role — the piece that was missing: admin was only ever assigned
+ * automatically from ADMIN_CHAT_ID / ADMIN_IDS, and there was no way to make someone a
+ * moderator, or to hand a user's seller/buyer role back after a mistake, without editing the
+ * database by hand.
+ *
+ * Promoting to 'admin' is restricted to the platform owner specifically — not to every admin —
+ * so a moderator or secondary admin can never mint another admin.
+ */
+export function createRoleWizard() {
+  return new Scenes.WizardScene<any>(
+    ROLE_WIZARD,
+    async (ctx: any) => {
+      if (!isAdminTelegramId(ctx.from!.id)) return ctx.scene.leave();
+      await ctx.reply(
+        'Foydalanuvchini @username yoki Telegram ID orqali kiriting:\n\n' +
+          '/cancel — bekor qilish'
+      );
+      return ctx.wizard.next();
+    },
+
+    async (ctx: any) => {
+      if (await bailIfCancelled(ctx)) return;
+
+      const raw = String(ctx.message?.text || '').trim();
+      if (/^\/cancel$/i.test(raw)) {
+        await ctx.reply('Bekor qilindi.', adminMenuKeyboard);
+        return ctx.scene.leave();
+      }
+      if (!raw) {
+        await ctx.reply('Iltimos, @username yoki Telegram ID kiriting:');
+        return;
+      }
+
+      const user = await findUserByHandle(raw);
+      if (!user) {
+        await ctx.reply('Foydalanuvchi topilmadi. Qaytadan kiriting yoki /cancel:');
+        return;
+      }
+
+      ctx.wizard.state.targetUserId = String(user._id);
+      const isOwner = String(ctx.from!.id) === config.adminChatId;
+
+      const rows = [
+        [
+          { text: '🛍 Xaridor', callback_data: 'role_buyer' },
+          { text: '💼 Sotuvchi', callback_data: 'role_seller' },
+        ],
+        [{ text: '🛡 Moderator', callback_data: 'role_moderator' }],
+      ];
+      if (isOwner) rows.push([{ text: '👑 Admin', callback_data: 'role_admin' }]);
+      rows.push([{ text: '❌ Bekor qilish', callback_data: 'role_cancel' }]);
+
+      await ctx.replyWithHTML(
+        [
+          `<b>Foydalanuvchi:</b> @${escapeHtml(user.username || String(user.telegramId))}`,
+          `<b>Hozirgi rol:</b> ${user.role}`,
+          '',
+          `Yangi rolni tanlang:`,
+        ].join('\n'),
+        { reply_markup: { inline_keyboard: rows } }
+      );
+      return ctx.wizard.next();
+    },
+
+    async (ctx: any) => {
+      const data = ctx.callbackQuery?.data;
+      if (!data) {
+        await ctx.reply('Iltimos, tugmalardan birini tanlang.');
+        return;
+      }
+
+      if (data === 'role_cancel') {
+        await ctx.answerCbQuery('Bekor qilindi');
+        await ctx.editMessageText('Bekor qilindi.', { parse_mode: 'HTML' });
+        return ctx.scene.leave();
+      }
+
+      const match = /^role_(buyer|seller|moderator|admin)$/.exec(data);
+      if (!match) {
+        await ctx.answerCbQuery();
+        return;
+      }
+
+      const newRole = match[1] as 'buyer' | 'seller' | 'moderator' | 'admin';
+      const isOwner = String(ctx.from!.id) === config.adminChatId;
+      if (newRole === 'admin' && !isOwner) {
+        await ctx.answerCbQuery('Faqat platforma egasi admin tayinlashi mumkin');
+        return;
+      }
+
+      const targetId = ctx.wizard.state.targetUserId as string;
+      const before = await User.findById(targetId);
+      if (!before) {
+        await ctx.answerCbQuery('Foydalanuvchi topilmadi');
+        return ctx.scene.leave();
+      }
+
+      await User.updateOne({ _id: targetId }, { $set: { role: newRole } });
+
+      await audit({
+        actorTelegramId: ctx.from!.id,
+        action: 'user.role_changed',
+        targetType: 'User',
+        targetId: new mongoose.Types.ObjectId(targetId),
+        before: { role: before.role },
+        after: { role: newRole },
+      });
+
+      await ctx.answerCbQuery('Yangilandi');
+      await ctx.editMessageText(
+        `✅ @${escapeHtml(before.username || String(before.telegramId))} roli endi: <b>${newRole}</b>`,
+        { parse_mode: 'HTML' }
+      );
+
+      if (before.telegramId) {
+        await notificationService.send({
+          type: 'buyer',
+          chatId: before.telegramId,
+          message: `ℹ️ Sizning rolingiz o‘zgardi: <b>${newRole}</b>`,
+        });
+      }
+
+      return ctx.scene.leave();
+    }
+  );
+}
 
 adminHandler.hears('📊 Statistika', async (ctx) => {
   if (!(await requireAdmin(ctx))) return;
@@ -135,6 +297,19 @@ adminHandler.hears('🛡 Moderatsiya', async (ctx) => {
 
   for (const product of queue) {
     const seller = product.sellerId as any;
+
+    // Previously moderators approved/rejected blind to any photos the seller attached — the
+    // images existed in the database but were never shown here.
+    if (product.images?.length > 0) {
+      await ctx.replyWithMediaGroup(
+        product.images.slice(0, 10).map((url: string, i: number) => ({
+          type: 'photo' as const,
+          media: url,
+          ...(i === 0 ? { caption: escapeHtml(product.title) } : {}),
+        }))
+      );
+    }
+
     await ctx.replyWithHTML(
       [
         `<b>🛡 Ko‘rikda: ${escapeHtml(product.title)}</b>`,

@@ -31,7 +31,9 @@ export async function expirePendingTransactions(): Promise<number> {
   const now = new Date();
   const stale = await Transaction.find({ status: 'pending_payment', expireAt: { $lt: now } })
     .limit(500)
-    .select('_id productId buyerId');
+    .select('_id productId buyerId')
+    .populate('buyerId', 'telegramId')
+    .populate('productId', 'title');
 
   let expired = 0;
   for (const transaction of stale) {
@@ -41,8 +43,23 @@ export async function expirePendingTransactions(): Promise<number> {
     );
     if (!claimed) continue;
 
-    await paymentService.releaseReservation(String(transaction.productId));
+    // `productId` is populated below (for the notification's title), so it's a document here,
+    // not a bare ObjectId — release must be pointed at its `_id`, not stringified directly.
+    const buyer = transaction.buyerId as any;
+    const product = transaction.productId as any;
+
+    await paymentService.releaseReservation(String(product?._id || transaction.productId));
     expired += 1;
+
+    // Previously silent — a buyer who missed the window had no way to learn the reservation
+    // lapsed short of reopening the listing and noticing it was gone.
+    if (buyer?.telegramId && product) {
+      await notificationService.notifyPaymentWindowExpired(
+        buyer.telegramId,
+        product.title || 'Mahsulot',
+        String(product._id)
+      );
+    }
   }
 
   if (expired > 0) console.log(`[Jobs] Expired ${expired} pending transaction(s)`);
@@ -158,19 +175,34 @@ export async function purgeExpiredCredentials(): Promise<number> {
  * safe assumption is that it isn't going to.
  */
 export async function expireUnclaimedDeals(): Promise<number> {
-  const result = await Product.updateMany(
-    {
-      listingType: 'private',
-      status: 'active',
-      dealExpiresAt: { $lt: new Date() },
-    },
-    { $set: { status: 'archived' }, $unset: { dealCode: '' } }
-  );
+  const stale = await Product.find({
+    listingType: 'private',
+    status: 'active',
+    dealExpiresAt: { $lt: new Date() },
+  })
+    .limit(200)
+    .select('_id title dealCode sellerId')
+    .populate('sellerId', 'telegramId');
 
-  if (result.modifiedCount > 0) {
-    console.log(`[Jobs] Expired ${result.modifiedCount} unclaimed deal code(s)`);
+  let expiredCount = 0;
+  for (const deal of stale) {
+    const claimed = await Product.findOneAndUpdate(
+      { _id: deal._id, status: 'active' },
+      { $set: { status: 'archived' }, $unset: { dealCode: '' } }
+    );
+    if (!claimed) continue;
+    expiredCount += 1;
+
+    // Previously silent — the seller only found out via the buyer reporting "code doesn't
+    // work" or by happening to reopen "📋 E’lonlarim" and noticing the code was gone.
+    const seller = deal.sellerId as any;
+    if (seller?.telegramId && deal.dealCode) {
+      await notificationService.notifyDealExpired(seller.telegramId, deal.title, deal.dealCode);
+    }
   }
-  return result.modifiedCount;
+
+  if (expiredCount > 0) console.log(`[Jobs] Expired ${expiredCount} unclaimed deal code(s)`);
+  return expiredCount;
 }
 
 /**

@@ -1,11 +1,15 @@
 import { Composer, Scenes } from 'telegraf';
 import { User } from '../../models/User';
+import { LoginRequest } from '../../models/LoginRequest';
+import { audit } from '../../models/AuditLog';
+import { sha256 } from '../../utils/crypto';
 import { botApi } from '../services/api';
 import { payoutService, InsufficientBalanceError } from '../../services/payoutService';
 import { ledgerService } from '../../services/ledgerService';
 import { describeRefundPolicy } from '../../services/refundEngine';
 import { config } from '../../config';
 import { escapeHtml, formatUzs } from '../../utils/helpers';
+import { bailIfCancelled } from '../wizards/guard';
 import {
   mainMenu,
   mainMenuKeyboard,
@@ -34,6 +38,14 @@ startHandler.start(async (ctx) => {
 
   // Deep link from the web catalog: /start buy_<productId> jumps straight to the listing.
   const payload = (ctx as any).startPayload as string | undefined;
+
+  // Deep link from the website's login screen: /start login_<token>. Approving here is what
+  // signs that browser in — the bot chat is the only place Telegram has already proved who
+  // the account holder is, which is why the site needs no password of its own.
+  if (payload?.startsWith('login_')) {
+    await presentLoginRequest(ctx, payload.slice(6));
+    return;
+  }
   if (payload?.startsWith('buy_')) {
     const productId = payload.slice(4);
     await ctx.replyWithHTML(
@@ -239,10 +251,6 @@ startHandler.action('settings_become_seller', async (ctx) => {
       `✅ <b>Endi siz sotuvchisiz!</b>`,
       '',
       `Daraja: <b>${user.trustLevel}</b>`,
-      `E’lon limiti: ${botApi.listingLimitFor(user)} ta`,
-      `Narx chegarasi: ${formatUzs(botApi.priceCeilingFor(user))}`,
-      '',
-      `<i>Muvaffaqiyatli bitimlardan keyin limitlar avtomatik oshadi.</i>`,
     ].join('\n'),
     sellerMenuKeyboard
   );
@@ -280,6 +288,8 @@ export function createPayoutWizards() {
       return ctx.wizard.next();
     },
     async (ctx: any) => {
+      if (await bailIfCancelled(ctx, ['cardNumber'])) return;
+
       const digits = String(ctx.message?.text || '').replace(/\D/g, '');
       if (digits.length !== 16) {
         await ctx.reply('Karta raqami 16 xonali bo‘lishi kerak. Qaytadan kiriting:');
@@ -290,6 +300,8 @@ export function createPayoutWizards() {
       return ctx.wizard.next();
     },
     async (ctx: any) => {
+      if (await bailIfCancelled(ctx, ['cardNumber'])) return;
+
       const holder = String(ctx.message?.text || '').trim();
       if (holder.length < 3) {
         await ctx.reply('Ismni to‘liq kiriting:');
@@ -321,6 +333,8 @@ export function createPayoutWizards() {
       return ctx.wizard.next();
     },
     async (ctx: any) => {
+      if (await bailIfCancelled(ctx)) return;
+
       const amount = parseInt(String(ctx.message?.text || '').replace(/\D/g, ''), 10);
       const user = await User.findOne({ telegramId: ctx.from!.id });
       if (!user) return ctx.scene.leave();
@@ -358,3 +372,98 @@ export function createPayoutWizards() {
 
   return [cardWizard, payoutWizard];
 }
+
+
+/**
+ * Shows a pending web-login request for confirmation.
+ *
+ * The request token travels in the button's callback_data rather than a database id.
+ * callback_data is attacker-controllable, so anything guessable there would let a stranger
+ * approve *their own* account into somebody else's waiting browser — a reverse session
+ * fixation, where the victim then types their card details into the attacker's cabinet.
+ * The token is 32 random bytes and never displayed, so only the person who opened this exact
+ * link can act on it.
+ */
+async function presentLoginRequest(ctx: any, token: string) {
+  const request = await LoginRequest.findOne({ tokenHash: sha256(token) });
+
+  if (!request || request.expiresAt.getTime() < Date.now() || request.status !== 'pending') {
+    await ctx.replyWithHTML(
+      '⌛ <b>Kirish so‘rovi eskirgan.</b>\n\nSaytda “Kirish” tugmasini qaytadan bosing.'
+    );
+    return;
+  }
+
+  await ctx.replyWithHTML(
+    [
+      `<b>🌐 Saytga kirishga ruxsat berasizmi?</b>`,
+      '',
+      `Brauzerda ko‘rsatilgan kod bilan solishtiring:`,
+      `<code>${request.pairCode}</code>`,
+      '',
+      request.userAgent ? `<i>Qurilma: ${escapeHtml(request.userAgent.slice(0, 80))}</i>` : '',
+      request.ip ? `<i>IP: ${escapeHtml(request.ip)}</i>` : '',
+      '',
+      `⚠️ <b>Kod mos kelmasa — “Yo‘q” ni bosing.</b> Bu so‘rovni siz boshlamagan bo‘lsangiz, ` +
+        `kimdir sizning hisobingiz bilan kirmoqchi bo‘lyapti.`,
+    ]
+      .filter(Boolean)
+      .join('\n'),
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '✅ Ha, bu men', callback_data: `wl_ok_${token}` },
+            { text: '❌ Yo‘q', callback_data: `wl_no_${token}` },
+          ],
+        ],
+      },
+    }
+  );
+}
+
+startHandler.action(/^wl_(ok|no)_(.+)$/, async (ctx: any) => {
+  const decision = ctx.match[1];
+  const token = ctx.match[2];
+
+  const user = await User.findOne({ telegramId: ctx.from!.id });
+  if (!user) return void ctx.answerCbQuery('Avval /start bosing');
+  if (user.isBlocked) return void ctx.answerCbQuery('Hisobingiz bloklangan');
+
+  if (decision === 'no') {
+    await LoginRequest.findOneAndUpdate(
+      { tokenHash: sha256(token), status: 'pending' },
+      { $set: { status: 'denied' } }
+    );
+    await ctx.editMessageText('❌ Kirish rad etildi.', { parse_mode: 'HTML' });
+    return void ctx.answerCbQuery('Rad etildi');
+  }
+
+  // Conditional on both `pending` and an unexpired deadline, so a link found later in the
+  // chat history cannot be tapped into a live session.
+  const approved = await LoginRequest.findOneAndUpdate(
+    { tokenHash: sha256(token), status: 'pending', expiresAt: { $gt: new Date() } },
+    { $set: { status: 'approved', userId: user._id, approvedAt: new Date() } },
+    { new: true }
+  );
+
+  if (!approved) {
+    await ctx.editMessageText('⌛ So‘rov eskirgan. Saytda qaytadan urinib ko‘ring.', { parse_mode: 'HTML' });
+    return void ctx.answerCbQuery('Eskirgan');
+  }
+
+  await audit({
+    actorId: user._id as any,
+    actorTelegramId: user.telegramId,
+    action: 'web.login_approved',
+    targetType: 'User',
+    targetId: user._id as any,
+    ip: approved.ip,
+  });
+
+  await ctx.editMessageText(
+    `✅ <b>Kirishga ruxsat berildi.</b>\n\nBrauzerga qayting — sahifa o‘zi ochiladi.`,
+    { parse_mode: 'HTML' }
+  );
+  await ctx.answerCbQuery('Ruxsat berildi');
+});

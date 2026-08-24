@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import { Product, TRUST_LABEL, botLink, formatUzs, timeAgo } from '@/lib/api';
+import Link from 'next/link';
+import { Product, TRUST_LABEL, formatUzs, timeAgo } from '@/lib/api';
 
 const TRUST_STYLE: Record<string, string> = {
   new: 'text-faint',
@@ -14,7 +15,7 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <article className="surface group flex flex-col overflow-hidden p-5 transition duration-200 hover:border-accent/40 hover:shadow-[0_1px_0_rgb(var(--accent)/.25),0_12px_28px_-18px_rgb(var(--ink)/.35)]">
-      <a
+      <Link
         href={`/product/${product._id}`}
         className="-mx-5 -mt-5 mb-4 block aspect-[4/3] overflow-hidden bg-raised"
       >
@@ -31,7 +32,7 @@ export function ProductCard({ product }: { product: Product }) {
             <PlaceholderIcon />
           </div>
         )}
-      </a>
+      </Link>
 
       <div className="mb-3 flex items-start justify-between gap-3">
         <span className="rounded-md bg-raised px-2 py-1 text-xs font-medium text-muted">
@@ -42,9 +43,9 @@ export function ProductCard({ product }: { product: Product }) {
         </time>
       </div>
 
-      <a href={`/product/${product._id}`} className="hover:text-accent">
+      <Link href={`/product/${product._id}`} className="hover:text-accent">
         <h3 className="mb-2 text-[17px] font-semibold leading-snug text-ink">{product.title}</h3>
-      </a>
+      </Link>
 
       <p className="mb-4 line-clamp-2 flex-1 text-sm leading-relaxed text-muted">
         {product.description}
@@ -76,17 +77,14 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="flex items-center justify-between gap-3 border-t border-line pt-4">
         <span className="tnum text-lg font-bold text-ink">{formatUzs(product.price)}</span>
         <div className="flex items-center gap-2">
-          <a href={`/product/${product._id}`} className="btn-ghost px-3 py-2 text-sm">
+          <Link href={`/product/${product._id}`} className="btn-ghost px-3 py-2 text-sm">
             Batafsil
-          </a>
-          <a
-            href={botLink(product._id)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-accent px-3.5 py-2 text-sm"
-          >
+          </Link>
+          {/* Buying now happens on the site itself; the bot remains a second entrance, not
+              the only one. */}
+          <Link href={`/sotib-olish/${product._id}`} className="btn-accent px-3.5 py-2 text-sm">
             Sotib olish
-          </a>
+          </Link>
         </div>
       </div>
     </article>

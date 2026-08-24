@@ -2,17 +2,15 @@ import { Composer, Scenes } from 'telegraf';
 import { User } from '../../models/User';
 import { Product } from '../../models/Product';
 import { EscrowHold } from '../../models/EscrowHold';
+import { Transaction } from '../../models/Transaction';
 import { botApi } from '../services/api';
 import { notificationService } from '../../services/notificationService';
-import {
-  paymentService,
-  AlreadyProcessedError,
-  ProductUnavailableError,
-  ForbiddenError,
-} from '../../services/paymentService';
+import { paymentService } from '../../services/paymentService';
 import { describeRefundPolicy } from '../../services/refundEngine';
 import { config } from '../../config';
-import { escapeHtml, formatUzs } from '../../utils/helpers';
+import { escapeHtml, formatUzs, formatDeadline, formatCardNumber } from '../../utils/helpers';
+import { bailIfCancelled } from '../wizards/guard';
+import { describeError } from '../utils/errors';
 import {
   mainMenuKeyboard,
   backButton,
@@ -22,6 +20,8 @@ import {
   refundReasonButtons,
   refundConfirmButtons,
   dealBuyButtons,
+  codeRetryButton,
+  catalogPageButtons,
 } from '../keyboards';
 
 export const buyerHandler = new Composer();
@@ -33,7 +33,7 @@ export const CODE_WIZARD = 'deal_code';
  *
  * The attempt counter matters: the code is the only thing standing between a stranger and a
  * private deal, so an unlimited prompt would let someone sit here grinding guesses. Three
- * tries and the scene closes.
+ * tries and the scene closes — with a button to start over instead of a dead end.
  */
 export function createCodeWizard() {
   return new Scenes.WizardScene<any>(
@@ -53,13 +53,10 @@ export function createCodeWizard() {
     },
 
     async (ctx: any) => {
+      if (await bailIfCancelled(ctx, ['codeTries'])) return;
+
       const raw = ctx.message?.text?.trim();
       if (!raw) return;
-
-      if (/^(🏠|bekor|\/cancel)/i.test(raw)) {
-        await ctx.reply('Bekor qilindi.', mainMenuKeyboard);
-        return ctx.scene.leave();
-      }
 
       const user = await User.findOne({ telegramId: ctx.from!.id });
       if (!user) return ctx.scene.leave();
@@ -69,9 +66,9 @@ export function createCodeWizard() {
       if (!deal) {
         ctx.session.codeTries = (ctx.session.codeTries || 0) + 1;
         if (ctx.session.codeTries >= 3) {
-          await ctx.reply(
-            'Kod 3 marta noto‘g‘ri kiritildi. Sotuvchidan kodni qayta so‘rang.',
-            mainMenuKeyboard
+          await ctx.replyWithHTML(
+            'Kod 3 marta noto‘g‘ri kiritildi. Sotuvchidan kodni qayta so‘rang yoki qaytadan urining:',
+            codeRetryButton()
           );
           return ctx.scene.leave();
         }
@@ -120,6 +117,11 @@ export function createCodeWizard() {
   );
 }
 
+buyerHandler.action('code_retry', async (ctx) => {
+  await ctx.answerCbQuery();
+  await (ctx as any).scene?.enter(CODE_WIZARD);
+});
+
 /**
  * Telegram callback_data is attacker-controllable — a crafted client can send arbitrary
  * callback_query data, not just what was on the button it was shown. Every handler that acts
@@ -141,18 +143,23 @@ async function loadOwnedEscrow(telegramId: number, escrowId: string) {
   return { escrow, user };
 }
 
-buyerHandler.hears(['🛍 Akkaunt sotib olish', '🛍 Mahsulotlar'], async (ctx) => {
-  const { products, total, pages } = await botApi.getActiveProducts(1, 10);
+/** Renders one page of the public catalog — shared by the menu entry and the pager buttons. */
+async function sendCatalogPage(ctx: any, page: number, edit = false) {
+  const { products, total, pages } = await botApi.getActiveProducts(page, 10);
 
   if (products.length === 0) {
-    await ctx.reply('Hozircha faol mahsulotlar mavjud emas. Keyinroq urinib ko‘ring.');
+    const text = page === 1 ? 'Hozircha faol mahsulotlar mavjud emas. Keyinroq urinib ko‘ring.' : 'Boshqa mahsulot yo‘q.';
+    if (edit) await ctx.editMessageText(text);
+    else await ctx.reply(text);
     return;
   }
 
-  await ctx.replyWithHTML(
-    `<b>🛍 Mahsulotlar (1–${products.length} / ${total})</b>\n\n` +
-      `<i>To‘liq katalog va filtrlar: ${config.siteUrl}</i>`
-  );
+  if (!edit) {
+    await ctx.replyWithHTML(
+      `<b>🛍 Mahsulotlar (sahifa ${page} / ${pages}, jami ${total})</b>\n\n` +
+        `<i>To‘liq katalog va filtrlar: ${config.siteUrl}</i>`
+    );
+  }
 
   for (const product of products) {
     const seller = product.sellerId as any;
@@ -173,8 +180,20 @@ buyerHandler.hears(['🛍 Akkaunt sotib olish', '🛍 Mahsulotlar'], async (ctx)
   }
 
   if (pages > 1) {
-    await ctx.replyWithHTML(`<b>📄 Sahifa 1 / ${pages}</b> — keyingisi uchun /next`);
+    await ctx.replyWithHTML(`<b>📄 Sahifa ${page} / ${pages}</b>`, catalogPageButtons(page, pages));
   }
+}
+
+buyerHandler.hears(['🛍 Akkaunt sotib olish', '🛍 Mahsulotlar'], async (ctx) => sendCatalogPage(ctx, 1));
+
+// Real pagination — the old "/next" command only repeated the total count and never actually
+// paged. It's kept as an alias so anyone used to typing it still gets somewhere useful.
+buyerHandler.command('next', async (ctx) => sendCatalogPage(ctx, 1));
+
+buyerHandler.action(/^catalog_page_(\d+)$/, async (ctx) => {
+  const page = parseInt(ctx.match[1], 10);
+  await ctx.answerCbQuery();
+  await sendCatalogPage(ctx, page, true);
 });
 
 buyerHandler.action(/^buy_(.+)$/, async (ctx) => {
@@ -196,8 +215,11 @@ buyerHandler.action(/^buy_(.+)$/, async (ctx) => {
       user._id.toString()
     );
 
+    // The full number, not the masked one: this is the platform's own receiving card and the
+    // buyer cannot make the transfer without it. Masking it here (as an earlier version did)
+    // left the payment step impossible to complete.
     const cardBlock = card
-      ? `<b>💳 Karta:</b> <code>${card.raw}</code>\n<b>👤 Egasi:</b> ${escapeHtml(card.holder)}\n<b>🏦 Bank:</b> ${escapeHtml(card.bank)}`
+      ? `<b>💳 Karta:</b> <code>${formatCardNumber(card.raw)}</code>\n<b>👤 Egasi:</b> ${escapeHtml(card.holder)}\n<b>🏦 Bank:</b> ${escapeHtml(card.bank)}`
       : `<i>⚠️ To‘lov kartasi sozlanmagan — admin bilan bog‘laning.</i>`;
 
     const paymentMessage = [
@@ -211,10 +233,13 @@ buyerHandler.action(/^buy_(.+)$/, async (ctx) => {
       '',
       cardBlock,
       '',
-      `⏱ <b>Muddat:</b> ${config.paymentWindowMinutes} daqiqa (${expiresAt.toLocaleTimeString('uz-UZ')} gacha)`,
+      `⏱ <b>Muddat:</b> ${formatDeadline(expiresAt)} gacha (${config.paymentWindowMinutes} daqiqa)`,
       '',
       `<i>⚠️ Summadagi oxirgi raqamlar aynan sizning buyurtmangizni aniqlaydi. ` +
         `Boshqa summa o‘tkazsangiz, to‘lov avtomatik tanilmaydi.</i>`,
+      '',
+      `<i>Vaqt tugasa, bandlik avtomatik bekor bo‘ladi va sizga xabar beramiz — pulingiz xavfsiz, ` +
+        `hech qanday to‘lov so‘ramaymiz.</i>`,
       '',
       `<i>To‘lov tushgach, bot sizga avtomatik xabar yuboradi.</i>`,
     ].join('\n');
@@ -222,16 +247,7 @@ buyerHandler.action(/^buy_(.+)$/, async (ctx) => {
     await ctx.editMessageText(paymentMessage, { parse_mode: 'HTML' });
     await ctx.answerCbQuery('To‘lov yaratildi');
   } catch (error: any) {
-    if (error instanceof ProductUnavailableError) {
-      await ctx.answerCbQuery('❌ Mahsulot sotilgan yoki band qilingan');
-      return;
-    }
-    if (error instanceof ForbiddenError) {
-      await ctx.answerCbQuery(`❌ ${error.message}`);
-      return;
-    }
-    console.error('[Buyer] buy failed:', error);
-    await ctx.answerCbQuery('Xatolik yuz berdi, qayta urinib ko‘ring');
+    await ctx.answerCbQuery(describeError(error));
   }
 });
 
@@ -271,17 +287,22 @@ buyerHandler.action(/^detail_(.+)$/, async (ctx) => {
     });
     await ctx.answerCbQuery();
   } catch (error) {
-    await ctx.answerCbQuery('Xatolik yuz berdi');
+    await ctx.answerCbQuery(describeError(error));
   }
 });
 
 /**
- * Reveals the credentials and starts the refund clock.
+ * Reveals the credentials and starts the (24h) confirm-or-auto-release clock.
  *
  * In v1 the only way to see the login was to press "Tasdiqlayman" — which simultaneously
  * released the money to the seller. A buyer could not inspect what they bought before paying
  * out for it, which made the escrow guarantee meaningless. Reveal and confirm are now separate
  * steps: look first, decide second.
+ *
+ * This is deliberately a *different* clock from the one already running since payment
+ * (`unrevealedGraceHours`, shown at payment-confirmed time) — conflating the two in earlier
+ * copy was a real source of confusion, so this screen calls out explicitly that a new, shorter
+ * timer starts now.
  */
 buyerHandler.action(/^reveal_(.+)$/, async (ctx) => {
   try {
@@ -323,10 +344,11 @@ buyerHandler.action(/^reveal_(.+)$/, async (ctx) => {
       `<i>Agar tasdiqlashdan oldin ma’lumotlarni o‘zgartirsangiz va keyin qaytarish so‘rasangiz, ` +
         `sotuvchi dalil taqdim etib nizoni yutib olishi mumkin.</i>`,
       '',
-      `⏱ Qaytarish muddati shu daqiqadan boshlandi:`,
+      `⏱ <b>Yangi muddat shu daqiqadan boshlandi</b> (avvalgi kutish muddatidan farqli):`,
       describeRefundPolicy(),
       '',
-      `<i>${config.autoReleaseHours} soat ichida javob bermasangiz, pul avtomatik sotuvchiga o‘tadi.</i>`
+      `<i>${formatDeadline(hold.autoReleaseAt)} gacha javob bermasangiz, pul avtomatik ` +
+        `sotuvchiga o‘tadi.</i>`
     );
 
     await ctx.editMessageText(lines.join('\n'), {
@@ -342,22 +364,13 @@ buyerHandler.action(/^reveal_(.+)$/, async (ctx) => {
           seller.telegramId,
           `👀 <b>Xaridor ma’lumotlarni ochdi</b>\n\n` +
             `Mahsulot: ${escapeHtml(product?.title || '—')}\n` +
-            `${config.autoReleaseHours} soat ichida e’tiroz bo‘lmasa, ` +
+            `${formatDeadline(hold.autoReleaseAt)} gacha e’tiroz bo‘lmasa, ` +
             `<b>${formatUzs(hold.sellerPayout)}</b> balansingizga o‘tadi.`
         );
       }
     }
   } catch (error: any) {
-    if (error instanceof AlreadyProcessedError) {
-      await ctx.answerCbQuery(error.message);
-      return;
-    }
-    if (error instanceof ForbiddenError) {
-      await ctx.answerCbQuery('Ruxsat yo‘q');
-      return;
-    }
-    console.error('[Buyer] reveal failed:', error);
-    await ctx.answerCbQuery('Xatolik yuz berdi');
+    await ctx.answerCbQuery(describeError(error));
   }
 });
 
@@ -374,13 +387,28 @@ buyerHandler.action('deal_abort', async (ctx) => {
   await ctx.editMessageText('Bitim ochilmadi. Kod hali ham amal qiladi.', { parse_mode: 'HTML' });
 });
 
+/**
+ * "My orders" — previously only listed EscrowHolds, so a buyer whose payment window expired or
+ * whose SMS went unmatched had nothing here to explain what happened to their money. Recent
+ * non-escrow transaction states are now folded in as a paper trail alongside the notifications
+ * `scheduler.ts` and the SMS webhook now send for those same events.
+ */
 buyerHandler.hears(['📦 Mening buyurtmalarim', '📦 Buyurtmalarim'], async (ctx) => {
   const user = await User.findOne({ telegramId: ctx.from!.id });
   if (!user) return;
 
-  const escrows = await botApi.getEscrowHolds(user._id.toString(), 'buyer');
+  const [escrows, otherTransactions] = await Promise.all([
+    botApi.getEscrowHolds(user._id.toString(), 'buyer'),
+    Transaction.find({
+      buyerId: user._id,
+      status: { $in: ['pending_payment', 'expired'] },
+    })
+      .sort('-createdAt')
+      .limit(10)
+      .populate('productId', 'title'),
+  ]);
 
-  if (escrows.length === 0) {
+  if (escrows.length === 0 && otherTransactions.length === 0) {
     await ctx.reply('Sizda hali buyurtmalar mavjud emas.');
     return;
   }
@@ -413,6 +441,22 @@ buyerHandler.hears(['📦 Mening buyurtmalarim', '📦 Buyurtmalarim'], async (c
     } else {
       await ctx.replyWithHTML(msg);
     }
+  }
+
+  for (const t of otherTransactions) {
+    const product = t.productId as any;
+    const label = t.status === 'pending_payment' ? '⏳ To‘lov kutilmoqda' : '⌛ Muddati o‘tgan';
+    await ctx.replyWithHTML(
+      [
+        `${label} <b>${escapeHtml(product?.title || 'Mahsulot')}</b>`,
+        '',
+        `💰 ${formatUzs(t.uniqueAmount)}`,
+        `🕐 ${new Date(t.createdAt).toLocaleString('uz-UZ')}`,
+        t.status === 'expired'
+          ? `<i>Vaqt tugagani uchun bandlik bekor qilindi. Pulingiz o‘tkazilmagan bo‘lsa xavfsiz.</i>`
+          : `<i>Ko‘rsatilgan summani o‘tkazing — tasdiqlangach xabar keladi.</i>`,
+      ].join('\n')
+    );
   }
 });
 
@@ -465,12 +509,7 @@ buyerHandler.action(/^confirm_escrow_(.+)$/, async (ctx) => {
     );
     await ctx.answerCbQuery('✅ Tasdiqlandi!');
   } catch (error: any) {
-    if (error instanceof AlreadyProcessedError) {
-      await ctx.answerCbQuery('Bu buyurtma allaqachon yopilgan');
-      return;
-    }
-    console.error('[Buyer] confirm failed:', error);
-    await ctx.answerCbQuery('Xatolik yuz berdi');
+    await ctx.answerCbQuery(describeError(error));
   }
 });
 
@@ -497,8 +536,8 @@ buyerHandler.action(/^rate_(.+)_([1-5])$/, async (ctx) => {
 
     await ctx.editMessageReplyMarkup(undefined);
     await ctx.answerCbQuery(`Rahmat! Bahoyingiz: ${'⭐'.repeat(rating)}`);
-  } catch (error) {
-    await ctx.answerCbQuery('Xatolik yuz berdi');
+  } catch (error: any) {
+    await ctx.answerCbQuery(describeError(error));
   }
 });
 
@@ -531,8 +570,12 @@ buyerHandler.action(/^refund_escrow_(.+)$/, async (ctx) => {
       `<b>Jarima:</b> ${quote.penaltyPercent}% — ${formatUzs(quote.penaltyAmount)}`,
       `<b>Sizga qaytariladi:</b> <b>${formatUzs(quote.refundToBuyer)}</b>`,
       '',
+      // Previously promised manual review here while still executing the refund automatically
+      // below (rdo_*) — that mismatch is fixed by describing the actual behavior instead of a
+      // review step that never happens.
       quote.requiresArbitration
-        ? `⚠️ <i>Sizda so‘nggi 30 kunda ko‘p qaytarish bo‘lgan. So‘rov admin ko‘rigiga yuboriladi.</i>`
+        ? `⚠️ <i>Sizda so‘nggi 30 kunda ko‘p qaytarish qayd etilgan. Bu so‘rov ham hisobga ` +
+          `olinadi va profilingiz keyingi tekshiruvlarda ko‘rib chiqiladi.</i>`
         : `<i>Sababni tanlang:</i>`,
     ].join('\n'),
     { parse_mode: 'HTML', reply_markup: refundReasonButtons(escrowId).reply_markup }
@@ -643,12 +686,7 @@ buyerHandler.action(/^rdo_(not_working|wrong_info|recovered|other)_(.+)$/, async
       );
     }
   } catch (error: any) {
-    if (error instanceof AlreadyProcessedError) {
-      await ctx.answerCbQuery('Bu buyurtma allaqachon yopilgan');
-      return;
-    }
-    console.error('[Buyer] refund failed:', error);
-    await ctx.answerCbQuery('Xatolik yuz berdi');
+    await ctx.answerCbQuery(describeError(error));
   }
 });
 

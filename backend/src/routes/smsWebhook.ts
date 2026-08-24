@@ -54,7 +54,7 @@ router.post('/sms-webhook', webhookLimiter, async (req: Request, res: Response) 
       const [buyer, product, hold] = await Promise.all([
         User.findById(t.buyerId).select('telegramId'),
         Product.findById(t.productId).select('title'),
-        EscrowHold.findOne({ transactionId: t._id }).select('_id'),
+        EscrowHold.findOne({ transactionId: t._id }).select('_id autoReleaseAt'),
       ]);
 
       if (buyer?.telegramId && hold) {
@@ -62,7 +62,8 @@ router.post('/sms-webhook', webhookLimiter, async (req: Request, res: Response) 
           buyer.telegramId,
           product?.title || 'Mahsulot',
           t.basePrice,
-          String(hold._id)
+          String(hold._id),
+          hold.autoReleaseAt
         );
       }
 
@@ -90,6 +91,17 @@ router.post('/sms-webhook', webhookLimiter, async (req: Request, res: Response) 
           `Inbox: <code>${result.inboxId}</code>\n\n` +
           `<i>Hech qaysi kutayotgan buyurtmaga mos kelmadi — qo‘lda tekshiring.</i>`
       );
+
+      // Previously the buyer heard nothing at all here — silence is the scariest failure mode
+      // in this whole flow ("I paid, nothing happened, did my money disappear?"). Only sent
+      // when exactly one pending order is plausibly theirs, so we never falsely reassure the
+      // wrong person.
+      if (result.amount) {
+        const telegramId = await paymentService.findPlausibleBuyerForAmount(result.amount);
+        if (telegramId) {
+          await notificationService.notifyPossiblePaymentReceived(telegramId);
+        }
+      }
     }
 
     return res.json({

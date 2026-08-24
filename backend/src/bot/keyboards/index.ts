@@ -150,6 +150,26 @@ export function payoutButtons(payoutId: string) {
   ]);
 }
 
+/** Photo-collection step: "done" once at least one photo is in, "skip" while there are none. */
+export function photoStepButtons(count: number) {
+  const rows = [[Markup.button.callback('✅ Tayyor', 'photos_done')]];
+  if (count === 0) rows.push([Markup.button.callback('⏭ O‘tkazib yuborish', 'photos_skip')]);
+  return Markup.inlineKeyboard(rows);
+}
+
+/** Shown after a deal-code entry locks out at 3 wrong attempts — re-enters CODE_WIZARD. */
+export function codeRetryButton() {
+  return Markup.inlineKeyboard([[Markup.button.callback('🔁 Qayta urinish', 'code_retry')]]);
+}
+
+/** Real prev/next paging for the bot catalog, replacing the old "/next" stub. */
+export function catalogPageButtons(page: number, pages: number) {
+  const row = [];
+  if (page > 1) row.push(Markup.button.callback('⬅️ Oldingi', `catalog_page_${page - 1}`));
+  if (page < pages) row.push(Markup.button.callback('Keyingisi ➡️', `catalog_page_${page + 1}`));
+  return Markup.inlineKeyboard([row]);
+}
+
 export function backButton() {
   return Markup.keyboard([['🏠 Asosiy menu']]).resize();
 }

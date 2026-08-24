@@ -50,6 +50,11 @@ export interface IUser extends Document {
 
   isBlocked: boolean;
   blockReason?: string;
+  /**
+   * Sessions issued before this moment are refused. "Log out everywhere" is one write here,
+   * which is what makes a stateless session token revocable without a session table.
+   */
+  webSessionsValidFrom?: Date;
   /** Automatic refunds are disabled for this user; refunds go to manual arbitration. */
   refundAutoDisabled: boolean;
 
@@ -113,6 +118,7 @@ const UserSchema = new Schema<IUser>(
 
     isBlocked: { type: Boolean, default: false, index: true },
     blockReason: { type: String },
+    webSessionsValidFrom: { type: Date },
     refundAutoDisabled: { type: Boolean, default: false },
 
     referralCode: { type: String, unique: true, sparse: true },

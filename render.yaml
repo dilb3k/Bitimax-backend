@@ -37,6 +37,9 @@ services:
         sync: false
       - key: INTERNAL_API_KEY
         sync: false
+      # Signs website session tokens. Rotating it only logs everybody out of the site.
+      - key: SESSION_SECRET
+        generateValue: true
       # Losing this makes every stored credential permanently unreadable. Back it up
       # somewhere outside Render before the first deploy.
       - key: ENCRYPTION_KEY

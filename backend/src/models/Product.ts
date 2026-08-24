@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { ProductStatus, ListingType } from '../types';
 import { encryptSecret, decryptSecret } from '../utils/crypto';
+import { config } from '../config';
 
 export interface ISensitiveData {
   login: string;
@@ -104,7 +105,17 @@ const ProductSchema = new Schema<IProduct>(
     moderatedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     moderatedAt: { type: Date },
 
-    images: [{ type: String }],
+    images: {
+      type: [{ type: String }],
+      default: [],
+      validate: {
+        // Bounded so a wizard bug (or a crafted API call, once one exists) can't attach an
+        // unbounded number of photos to one listing — matches the same defense-in-depth
+        // pattern as title/description/price above.
+        validator: (arr: string[]) => arr.length <= config.maxProductImages,
+        message: `Ko‘pi bilan ${config.maxProductImages} ta rasm mumkin`,
+      },
+    },
     tags: [{ type: String }],
 
     reservedBy: { type: Schema.Types.ObjectId, ref: 'User' },

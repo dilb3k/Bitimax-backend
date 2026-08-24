@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
 import { Bricolage_Grotesque, Manrope } from 'next/font/google';
 import './globals.css';
 
@@ -60,10 +61,23 @@ const noFlashTheme = `
 }catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Middleware mints one nonce per request; the page's only inline script carries it, so
+  // `script-src` can stay strict instead of falling back to 'unsafe-inline'.
+  const nonce = headers().get('x-nonce') ?? undefined;
+
   return (
     <html lang="uz" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: noFlashTheme }} />
+        {/*
+          suppressHydrationWarning: the browser strips `nonce` off the DOM node once it has
+          used it (a deliberate anti-exfiltration measure), so React's client-side pass reads
+          an empty attribute and reports a mismatch on a tag that is in fact correct.
+        */}
+        <script
+          nonce={nonce}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: noFlashTheme }}
+        />
       </head>
       <body className="min-h-screen font-sans">{children}</body>
     </html>

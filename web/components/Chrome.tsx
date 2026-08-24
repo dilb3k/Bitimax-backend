@@ -1,39 +1,63 @@
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { botLink } from '@/lib/api';
 import { Logo, LogoMark } from './Logo';
 import { MobileNav } from './MobileNav';
 
+/**
+ * Reads the display-only companion cookie the login flow writes alongside the session.
+ *
+ * The session itself is httpOnly and unreadable here on purpose. This cookie holds a name and
+ * a role and decides exactly one thing — whether the header says "Kirish" or "Kabinet". Every
+ * real permission decision is made by the backend against the signed token, so nothing breaks
+ * (and nothing is granted) if a user edits it.
+ */
+export function useSessionDisplay() {
+  const [user, setUser] = useState<{ name: string; role: string } | null>(null);
+  // Re-read on every navigation: signing in and signing out are client-side transitions, and
+  // a header stuck on "Kirish" after a successful login reads as a failed login.
+  const pathname = usePathname();
+
+  useEffect(() => {
+    try {
+      const match = document.cookie.split('; ').find((row) => row.startsWith('bx_user='));
+      // Clearing on absence matters as much as setting on presence — after a logout the
+      // cookie is gone and the header has to fall back to the signed-out state.
+      setUser(match ? JSON.parse(decodeURIComponent(match.slice('bx_user='.length))) : null);
+    } catch {
+      // A malformed cookie just means the header shows the signed-out state.
+    }
+  }, [pathname]);
+
+  return user;
+}
+
 export function Header() {
+  const user = useSessionDisplay();
+
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-ground/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
-        <a href="/" className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5">
           <Logo priority />
           <span className="hidden text-xs text-faint sm:inline">kafil bilan savdo</span>
-        </a>
+        </Link>
 
         <nav className="flex items-center gap-2">
-          <a href="#katalog" className="hidden px-3 py-2 text-sm text-muted hover:text-ink sm:block">
+          <Link href="/#katalog" className="hidden px-3 py-2 text-sm text-muted hover:text-ink sm:block">
             Katalog
-          </a>
-          <a
-            href="#qanday"
-            className="hidden px-3 py-2 text-sm text-muted hover:text-ink sm:block"
-          >
-            Qanday ishlaydi
-          </a>
+          </Link>
+          <Link href="/kod" className="hidden px-3 py-2 text-sm text-muted hover:text-ink sm:block">
+            Kod bilan
+          </Link>
           <ThemeToggle />
-          <a
-            href={botLink()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden btn-accent px-3.5 py-2 text-sm sm:inline-flex"
-          >
-            Botni ochish
-          </a>
-          <MobileNav />
+          <Link href={user ? '/kabinet' : '/kirish'} className="hidden btn-accent px-3.5 py-2 text-sm sm:inline-flex">
+            {user ? 'Kabinet' : 'Kirish'}
+          </Link>
+          <MobileNav authed={Boolean(user)} />
         </nav>
       </div>
     </header>
@@ -111,14 +135,19 @@ export function Footer() {
               <p className="mb-2 text-xs uppercase tracking-wider text-faint">Havolalar</p>
               <ul className="space-y-1.5">
                 <li>
-                  <a href="#katalog" className="text-muted hover:text-ink">
+                  <Link href="/#katalog" className="text-muted hover:text-ink">
                     Katalog
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#qanday" className="text-muted hover:text-ink">
-                    Qanday ishlaydi
-                  </a>
+                  <Link href="/kod" className="text-muted hover:text-ink">
+                    Kod bilan sotib olish
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/kabinet" className="text-muted hover:text-ink">
+                    Kabinet
+                  </Link>
                 </li>
               </ul>
             </div>

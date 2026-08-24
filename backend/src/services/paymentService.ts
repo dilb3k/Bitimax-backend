@@ -292,6 +292,30 @@ export class PaymentService {
   }
 
   /**
+   * Best-effort, deliberately conservative guess at who an unmatched SMS might belong to —
+   * used only to decide whether it's safe to send the buyer a cautious "we're checking"
+   * message, never to actually settle anything (the SMS genuinely matched no `uniqueAmount`,
+   * so nothing here moves money). A transaction counts as plausible if its base price is
+   * within the unique-amount tail range (100–999) of the received amount — e.g. the sender
+   * transferred the rounded price without the tail, or a digit was mistyped. If more than one
+   * pending order is plausible, we deliberately return null rather than guess: reassuring the
+   * wrong buyer is worse than reassuring no one.
+   */
+  async findPlausibleBuyerForAmount(amount: number): Promise<number | null> {
+    const candidates = await Transaction.find({
+      status: 'pending_payment',
+      expireAt: { $gt: new Date() },
+      basePrice: { $gte: amount - 999, $lte: amount },
+    })
+      .limit(2)
+      .populate('buyerId', 'telegramId');
+
+    if (candidates.length !== 1) return null;
+    const buyer = candidates[0].buyerId as any;
+    return buyer?.telegramId ?? null;
+  }
+
+  /**
    * Hands the credentials to the buyer and starts the refund clock.
    *
    * The clock deliberately starts here rather than at payment. Payment confirmation is

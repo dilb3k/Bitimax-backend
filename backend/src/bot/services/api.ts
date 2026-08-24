@@ -59,6 +59,7 @@ export class BotApiService {
     recoveryCode?: string;
     additionalInfo?: string;
     tags?: string[];
+    images?: string[];
   }) {
     const product = new Product({
       sellerId: data.sellerId,
@@ -67,6 +68,7 @@ export class BotApiService {
       price: data.price,
       category: data.category,
       tags: data.tags || [],
+      images: data.images || [],
       // New listings queue for moderation instead of going straight to the catalog — one
       // fake listing reaching a buyer costs more trust than every legitimate listing gains.
       status: 'pending_review',
@@ -103,6 +105,7 @@ export class BotApiService {
     login: string;
     password: string;
     recoveryCode?: string;
+    images?: string[];
   }) {
     for (let attempt = 0; attempt < 10; attempt++) {
       const dealCode = generateDealCode();
@@ -112,6 +115,7 @@ export class BotApiService {
         description: data.description || `Kelishilgan bitim: ${data.title}`,
         price: data.price,
         category: data.category || 'Boshqa',
+        images: data.images || [],
         listingType: 'private',
         dealCode,
         // An unclaimed code shouldn't stay live forever — the seller's credentials are sitting
@@ -199,34 +203,6 @@ export class BotApiService {
    */
   async initiatePurchase(productId: string, buyerId: string) {
     return paymentService.createPaymentTransaction(productId, buyerId);
-  }
-
-  /** Whether the seller is allowed to list at this price, given their trust level. */
-  priceCeilingFor(user: IUser): number {
-    switch (user.trustLevel) {
-      case 'partner':
-        return Number.MAX_SAFE_INTEGER;
-      case 'trusted':
-        return 5_000_000;
-      case 'verified':
-        return 1_500_000;
-      default:
-        return 300_000;
-    }
-  }
-
-  /** Concurrent active listings allowed, also a function of trust. */
-  listingLimitFor(user: IUser): number {
-    switch (user.trustLevel) {
-      case 'partner':
-        return 500;
-      case 'trusted':
-        return 100;
-      case 'verified':
-        return 25;
-      default:
-        return 3;
-    }
   }
 
   supportLink(): string {

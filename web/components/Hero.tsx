@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { PlatformStats, botLink, formatUzs } from '@/lib/api';
 
 /**
@@ -35,12 +36,22 @@ export function Hero({ stats }: { stats: PlatformStats | null }) {
           sotuvchiga o‘tadi.
         </p>
 
+        {/* The site is now a full entrance in its own right — buying, selling and escrow all
+            happen here — so the primary action is the catalog, not a hop into Telegram. */}
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <a href={botLink()} target="_blank" rel="noopener noreferrer" className="btn-accent">
-            Telegram botni ochish
-          </a>
-          <a href="#katalog" className="btn-ghost">
+          <a href="#katalog" className="btn-accent">
             Katalogni ko‘rish
+          </a>
+          <Link href="/kabinet/bitim" className="btn-ghost">
+            Kafil bitim yaratish
+          </Link>
+          <a
+            href={botLink()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-2 py-2 text-sm text-muted underline-offset-4 hover:text-ink hover:underline"
+          >
+            yoki botda davom eting
           </a>
         </div>
 

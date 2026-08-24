@@ -1,4 +1,4 @@
-import { botLink } from '@/lib/api';
+import Link from 'next/link';
 
 /**
  * Explains the escrow-only path: two people who already agreed a price elsewhere use Bitimax
@@ -29,8 +29,8 @@ export function DealCode() {
 
             <ol className="mt-7 space-y-3.5">
               {[
-                'Sotuvchi botda “Kelishilgan bitim” ni tanlaydi — 4 ta savol, 1 daqiqa.',
-                'Bot 8 belgili kod beradi. Sotuvchi uni xaridorga yuboradi.',
+                'Sotuvchi “Kafil bitim” ni tanlaydi — 4 ta savol, 1 daqiqa (saytda ham, botda ham).',
+                '8 belgili kod chiqadi. Sotuvchi uni xaridorga yuboradi.',
                 'Xaridor “Kod bilan sotib olish” → kodni kiritadi → to‘laydi.',
                 'Xaridor akkauntni tekshiradi va tasdiqlaydi — pul sotuvchiga o‘tadi.',
               ].map((step, index) => (
@@ -43,14 +43,14 @@ export function DealCode() {
               ))}
             </ol>
 
-            <a
-              href={botLink()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-accent mt-8"
-            >
-              Bitim yaratish
-            </a>
+            <div className="mt-8 flex flex-wrap gap-2.5">
+              <Link href="/kabinet/bitim" className="btn-accent">
+                Bitim yaratish
+              </Link>
+              <Link href="/kod" className="btn-ghost">
+                Kodim bor
+              </Link>
+            </div>
           </div>
 
           <CodeVisual />

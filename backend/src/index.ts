@@ -10,6 +10,8 @@ import smsWebhookRoutes from './routes/smsWebhook';
 import productRoutes from './routes/products';
 import transactionRoutes from './routes/transactions';
 import escrowRoutes from './routes/escrow';
+import authRoutes from './routes/auth';
+import meRoutes from './routes/me';
 
 const app = express();
 
@@ -20,7 +22,8 @@ app.use(helmet());
 app.use(
   cors({
     origin: config.corsOrigins,
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-internal-key'],
   })
 );
 app.use(express.json({ limit: '100kb' }));
@@ -39,6 +42,8 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api', smsWebhookRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/me', meRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/escrow', escrowRoutes);
@@ -63,6 +68,8 @@ async function start() {
     console.log(`[Server] Bitimax API running on port ${config.port}`);
     console.log(`[Server] SMS Webhook: POST /api/sms-webhook`);
     console.log(`[Server] Products API: GET /api/products`);
+    console.log(`[Server] Web auth: POST /api/auth/start · GET /api/auth/poll`);
+    console.log(`[Server] Web cabinet: /api/me/* (session token)`);
     console.log(`[Server] Transactions API: GET /api/transactions (internal)`);
     console.log(`[Server] Escrow API: GET /api/escrow (internal)`);
   });

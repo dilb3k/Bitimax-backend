@@ -91,6 +91,16 @@ export function maskCard(cardNumber: string): string {
   return `${digits.slice(0, 4)} •••• •••• ${digits.slice(-4)}`;
 }
 
+/**
+ * `8600123456789012` → `8600 1234 5678 9012`. Used where the buyer has to *type the number
+ * into a banking app* — the platform's own receiving card on the payment screen. Everywhere a
+ * card belongs to a user (payout destinations), maskCard is the only correct formatter.
+ */
+export function formatCardNumber(cardNumber: string): string {
+  const digits = String(cardNumber).replace(/\D/g, '');
+  return digits.replace(/(.{4})/g, '$1 ').trim();
+}
+
 export function isValidUzCard(cardNumber: string): boolean {
   const digits = cardNumber.replace(/\D/g, '');
   return digits.length === 16;
@@ -138,4 +148,19 @@ export function escapeHtml(text: string): string {
 
 export function formatUzs(amount: number): string {
   return `${Math.round(amount).toLocaleString('en-US').replace(/,/g, ' ')} UZS`;
+}
+
+/**
+ * Renders a deadline as an absolute local date/time ("13-avgust, 14:00") rather than a relative
+ * duration ("72 soat"). Two different clocks (`autoReleaseHours` and `unrevealedGraceHours`)
+ * are both phrased as "N soat ichida" in the product's copy, which made them easy to conflate —
+ * an absolute timestamp for each is unambiguous regardless of which clock it belongs to.
+ */
+export function formatDeadline(date: Date): string {
+  return date.toLocaleString('uz-UZ', {
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }

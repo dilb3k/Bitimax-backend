@@ -106,6 +106,15 @@ export const config = {
     '0'.repeat(64) // dev-only: predictable, never use outside local development
   ),
 
+  // Signs the web session token (see utils/jwt.ts). Separate from every other secret on
+  // purpose: leaking it forges logins but decrypts nothing, and rotating it just logs
+  // everybody out instead of destroying stored credentials.
+  sessionSecret: required('SESSION_SECRET', 'dev_only_session_secret_change_me'),
+  // How long a browser session stays valid before the user has to re-approve in the bot.
+  webSessionDays: num('WEB_SESSION_DAYS', 7),
+  // How long an unapproved web login request stays claimable.
+  loginRequestMinutes: num('LOGIN_REQUEST_MINUTES', 5),
+
   platformCommission: num('PLATFORM_COMMISSION', 7),
   refundTiers: parseRefundTiers(),
   paymentCards: parsePaymentCards(),
@@ -127,6 +136,17 @@ export const config = {
   refundAbuseThreshold: num('REFUND_ABUSE_THRESHOLD', 3),
   // Credentials are wiped from the database this many days after an order settles.
   credentialRetentionDays: num('CREDENTIAL_RETENTION_DAYS', 30),
+
+  // ─── Images (Cloudinary) ───────────────────────────────────────────────────
+  // Signed uploads — the bot backend signs every upload with the API secret, so only this
+  // server can push images into the account (unlike an unsigned upload_preset, which anyone
+  // who learns the preset name could use). Left blank in dev; the upload step just fails
+  // closed with a clear error until these are set.
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
+  // Hard cap on how many photos a single product/deal can carry.
+  maxProductImages: num('MAX_PRODUCT_IMAGES', 8),
 
   siteUrl: process.env.SITE_URL || 'https://bitimax.uz',
   botUsername: process.env.BOT_USERNAME || 'bitimax_bot',

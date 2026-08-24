@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Header, Footer } from '@/components/Chrome';
 import { ProductGallery } from '@/components/ProductGallery';
@@ -50,9 +51,9 @@ export default async function ProductPage({ params }: { params: { id: string } }
       <Header />
       <main>
         <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
-          <a href="/#katalog" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
+          <Link href="/#katalog" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
             ← Katalogga qaytish
-          </a>
+          </Link>
 
           <div className="grid gap-8 sm:grid-cols-2">
             <ProductGallery images={product.images ?? []} title={product.title} />
@@ -93,14 +94,19 @@ export default async function ProductPage({ params }: { params: { id: string } }
 
               <p className="tnum mt-6 text-3xl font-bold text-ink">{formatUzs(product.price)}</p>
 
-              <a
-                href={botLink(product._id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-accent mt-5 w-full sm:w-auto"
-              >
-                Botda sotib olish
-              </a>
+              <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
+                <Link href={`/sotib-olish/${product._id}`} className="btn-accent sm:px-6">
+                  Sotib olish
+                </Link>
+                <a
+                  href={botLink(product._id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-ghost"
+                >
+                  Botda ochish
+                </a>
+              </div>
 
               <div className="surface mt-6 p-4 text-sm leading-relaxed text-muted">
                 🛡 Pul kafilda saqlanadi — akkauntni tekshirmaguningizcha sotuvchiga o‘tmaydi.

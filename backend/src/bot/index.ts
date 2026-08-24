@@ -7,7 +7,7 @@ import { notificationService } from '../services/notificationService';
 import { startHandler, createPayoutWizards, keyboardFor } from './handlers/start';
 import { sellerHandler, createSellerWizard, createDealWizard, CATEGORIES } from './handlers/seller';
 import { buyerHandler, createCodeWizard } from './handlers/buyer';
-import { adminHandler } from './handlers/admin';
+import { adminHandler, createRoleWizard } from './handlers/admin';
 import { botApi } from './services/api';
 import { escapeHtml, formatUzs } from '../utils/helpers';
 
@@ -19,7 +19,17 @@ import { escapeHtml, formatUzs } from '../utils/helpers';
  */
 export async function startBot(): Promise<void> {
   if (!config.botToken || config.botToken === 'YOUR_BOT_TOKEN_HERE') {
-    throw new Error('[Bot] BOT_TOKEN is not configured! Please set BOT_TOKEN in .env file');
+    // In production the bot *is* the product: refuse to boot half a platform. Locally, a
+    // missing token is the normal case while working on the website, so the API and the
+    // scheduler are allowed to run without it instead of taking the whole process down.
+    if (config.isProd) {
+      throw new Error('[Bot] BOT_TOKEN is not configured! Please set BOT_TOKEN in .env file');
+    }
+    console.warn(
+      '[Bot] BOT_TOKEN not set — bot disabled. The API and the scheduler keep running; ' +
+        'Telegram notifications are skipped.'
+    );
+    return;
   }
 
   const bot = new Telegraf<any>(config.botToken);
@@ -29,6 +39,7 @@ export async function startBot(): Promise<void> {
     createSellerWizard(),
     createDealWizard(),
     createCodeWizard(),
+    createRoleWizard(),
     ...createPayoutWizards(),
   ]);
 
@@ -126,14 +137,6 @@ export async function startBot(): Promise<void> {
         inline_keyboard: [[{ text: '🔍 Batafsil', callback_data: `detail_${productId}` }]],
       },
     });
-  });
-
-  bot.command('next', async (ctx) => {
-    const { total, pages } = await botApi.getActiveProducts(1, 10);
-    await ctx.replyWithHTML(
-      `Jami ${total} ta mahsulot (${pages} sahifa).\n\n` +
-        `To‘liq katalog va filtrlar: ${config.siteUrl}`
-    );
   });
 
   bot.catch((err: any, ctx: any) => {
