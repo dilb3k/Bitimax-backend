@@ -1,216 +1,197 @@
-import Link from 'next/link';
-import { PlatformStats, botLink, formatUzs } from '@/lib/api';
+import Link from "next/link";
+import { PlatformStats, PublicPolicy } from "@/lib/api";
+import { Icon } from "./Icon";
 
-/**
- * The hero has one job: answer "why would I send money to a stranger's card?" before the
- * visitor scrolls. So the headline is the guarantee itself, and the three steps underneath
- * are the mechanism rather than marketing — a visitor who reads only this block already
- * understands what escrow buys them.
- */
 export function Hero({ stats }: { stats: PlatformStats | null }) {
   return (
-    <section className="relative overflow-hidden border-b border-line">
-      {/* Faint cyan wash, kept low so the type stays the loudest thing on the screen. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.55]"
-        style={{
-          background:
-            'radial-gradient(60rem 28rem at 12% -10%, rgb(var(--accent) / .16), transparent 60%)',
-        }}
-      />
-
-      <div className="relative mx-auto max-w-6xl px-5 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-20">
-        <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent-soft px-3 py-1.5 text-xs font-medium text-ink">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-          P2P Escrow · Kafil xizmati
-        </p>
-
-        <h1 className="max-w-[19ch] text-4xl font-extrabold leading-[1.05] text-ink sm:text-6xl">
-          Pulingiz siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi.
-        </h1>
-
-        <p className="mt-5 max-w-prose text-base leading-relaxed text-muted sm:text-lg">
-          Raqamli akkauntlarni sotib olish har doim ishonchga tayangan. Bitmax o‘rtada turadi:
-          to‘lovingiz kafilda saqlanadi, siz akkauntni tekshirasiz, va faqat shundan keyin pul
-          sotuvchiga o‘tadi.
-        </p>
-
-        {/* The site is now a full entrance in its own right — buying, selling and escrow all
-            happen here — so the primary action is the catalog, not a hop into Telegram. */}
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <a href="#katalog" className="btn-accent">
-            Katalogni ko‘rish
-          </a>
-          <Link href="/kabinet/bitim" className="btn-ghost">
-            Kafil bitim yaratish
-          </Link>
-          <a
-            href={botLink()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-2 py-2 text-sm text-muted underline-offset-4 hover:text-ink hover:underline"
-          >
-            yoki botda davom eting
-          </a>
+    <section className="relative overflow-hidden border-b border-line bg-surface">
+      <div className="absolute inset-0 hero-grid" aria-hidden="true" />
+      <div className="relative mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-20">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
+          <div>
+            <p className="eyebrow">
+              <span className="h-2 w-2 rounded-full bg-accent" /> RAQAMLI BOZOR
+              · KAFIL XIZMATI
+            </p>
+            <h1 className="mt-6 max-w-[13ch] text-5xl font-extrabold leading-[1.06] sm:text-6xl lg:text-[68px]">
+              Kelishuv sizdan.
+              <br />
+              <span className="text-accent">Kafillik bizdan.</span>
+            </h1>
+            <p className="mt-6 max-w-md text-base leading-7 text-muted">
+              Akkaunt sotib oling, soting yoki tayyor kelishuvni kod bilan
+              oching. To‘lov, tekshirish va bitim holati — barchasi bir joyda.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a href="#katalog" className="btn-accent">
+                Katalogni ko‘rish <Icon name="arrow" />
+              </a>
+              <Link href="/kabinet/yangi" className="btn-ghost">
+                <Icon name="plus" /> E’lon berish
+              </Link>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted">
+              <span className="flex items-center gap-1.5">
+                <Icon name="shield" width={16} /> To‘lov kafilda
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Icon name="check" width={16} /> Web va Telegram’da
+              </span>
+            </div>
+          </div>
+          <div className="relative rounded-[28px] bg-[#0d2234] p-6 text-white shadow-xl sm:p-8">
+            <div className="flex items-center justify-between border-b border-white/15 pb-5">
+              <span className="text-sm font-semibold">
+                Bitim qanday ishlaydi?
+              </span>
+              <Icon
+                name="shield"
+                className="text-cyan-300"
+                width={26}
+                height={26}
+              />
+            </div>
+            <ol className="mt-7 space-y-7">
+              {[
+                [
+                  "01",
+                  "Tanlang va to‘lang",
+                  "Katalogdagi e’lon yoki sotuvchi bergan kod orqali.",
+                ],
+                [
+                  "02",
+                  "Akkauntni tekshiring",
+                  "To‘lovdan so‘ng ma’lumotlar sizga ochiladi.",
+                ],
+                [
+                  "03",
+                  "Bitimni yakunlang",
+                  "Tasdiqlang yoki shartlar bo‘yicha qaytarish so‘rang.",
+                ],
+              ].map(([n, title, text]) => (
+                <li key={n} className="flex gap-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-300/10 font-mono text-sm text-cyan-200">
+                    {n}
+                  </span>
+                  <div>
+                    <h2 className="text-base font-semibold">{title}</h2>
+                    <p className="mt-1 text-sm leading-6 text-slate-300">
+                      {text}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-7 rounded-xl bg-white/5 p-4 text-xs leading-5 text-slate-300">
+              Tekshirish muddati va avtomatik yakunlash vaqti buyurtmangizda
+              ko‘rsatiladi.
+            </p>
+          </div>
         </div>
-
-        <Steps />
-
-        {stats && <StatStrip stats={stats} />}
+        {stats && (
+          <dl className="mt-12 grid grid-cols-2 gap-5 border-t border-line pt-7 sm:mt-16 sm:grid-cols-4">
+            {[
+              [stats.active, "Faol e’lon"],
+              [stats.sold, "Sotilgan mahsulot"],
+              [stats.sellers, "Sotuvchi"],
+              [stats.commission + "%", "Platforma komissiyasi"],
+            ].map(([value, label]) => (
+              <div key={label}>
+                <dt className="text-xs text-muted">{label}</dt>
+                <dd className="tnum mt-1 text-2xl font-bold">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </div>
     </section>
   );
 }
 
-/**
- * Numbered because this genuinely is a sequence — the order is the safety guarantee, and
- * step 3 only exists because step 2 came first.
- */
-function Steps() {
-  const steps = [
-    {
-      n: '01',
-      title: 'To‘laysiz',
-      body: 'Pul kafilda bloklanadi. Sotuvchi unga tegolmaydi.',
-    },
-    {
-      n: '02',
-      title: 'Tekshirasiz',
-      body: 'Login va parol ochiladi. Akkauntga kirib, hammasi joyidami — ko‘rasiz.',
-    },
-    {
-      n: '03',
-      title: 'Tasdiqlaysiz',
-      body: 'Hammasi joyida bo‘lsa — pul sotuvchiga o‘tadi. Bo‘lmasa — sizga qaytadi.',
-    },
-  ];
-
+export function RefundPolicy({ policy }: { policy: PublicPolicy | null }) {
   return (
-    <ol className="mt-12 grid gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-3">
-      {steps.map((step) => (
-        <li key={step.n} className="bg-surface p-5">
-          <span className="tnum block text-xs font-bold tracking-[0.14em] text-accent">{step.n}</span>
-          <h2 className="mt-2 text-base font-semibold text-ink">{step.title}</h2>
-          <p className="mt-1.5 text-sm leading-relaxed text-muted">{step.body}</p>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function StatStrip({ stats }: { stats: PlatformStats }) {
-  const items = [
-    { value: stats.active, label: 'Faol e’lon' },
-    { value: stats.sold, label: 'Yakunlangan bitim' },
-    { value: stats.sellers, label: 'Sotuvchi' },
-    { value: `${stats.commission}%`, label: 'Komissiya' },
-  ];
-
-  return (
-    <dl className="mt-10 flex flex-wrap gap-x-10 gap-y-5">
-      {items.map((item) => (
-        <div key={item.label}>
-          <dt className="text-xs uppercase tracking-wider text-faint">{item.label}</dt>
-          <dd className="tnum mt-0.5 text-2xl font-bold text-ink">{item.value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-/**
- * The refund ladder, stated plainly. This is the single most persuasive thing on the page —
- * a marketplace willing to print its own penalty schedule is one that expects to honour it.
- */
-export function RefundPolicy({ exampleAmount = 1_000_000 }: { exampleAmount?: number }) {
-  const rows = [
-    { window: 'Ma’lumot ochilmagan', back: 100, note: 'Muddatsiz' },
-    { window: '0–10 daqiqa', back: 100, note: 'Jarimasiz' },
-    { window: '10 daqiqa – 2 soat', back: 90, note: '10% jarima' },
-    { window: '2 – 24 soat', back: 50, note: '50% jarima' },
-    { window: '24 soatdan keyin', back: 0, note: 'Nizo orqali' },
-  ];
-
-  return (
-    <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
-      <h2 className="text-2xl font-bold text-ink sm:text-3xl">Qaytarish shartlari</h2>
-      <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted">
-        Vaqt <strong className="font-semibold text-ink">to‘lovdan emas</strong>, siz akkaunt
-        ma’lumotlarini ochgan daqiqadan boshlanadi. To‘lov siz uxlab yotganingizda tasdiqlanishi
-        mumkin — buning uchun jarima to‘lamaysiz.
-      </p>
-
-      {/* A horizontally-scrolling table reads as janky on a phone — below `sm` the same rows
-          render as stacked cards instead, matching how `Catalog`'s category chips already
-          handle overflow (scroll) versus how this table used to (also scroll, just worse
-          because every column needed to be visible at once to make sense). */}
-      <div className="mt-6 hidden overflow-x-auto sm:block">
-        <table className="w-full min-w-[34rem] border-separate border-spacing-0 text-sm">
-          <thead>
-            <tr className="text-left text-xs uppercase tracking-wider text-faint">
-              <th className="border-b border-line pb-3 pr-4 font-medium">Qachon</th>
-              <th className="border-b border-line pb-3 pr-4 font-medium">Qaytariladi</th>
-              <th className="border-b border-line pb-3 pr-4 font-medium">
-                {formatUzs(exampleAmount)} uchun
-              </th>
-              <th className="border-b border-line pb-3 font-medium">Izoh</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.window}>
-                <td className="border-b border-line py-3 pr-4 font-medium text-ink">
-                  {row.window}
-                </td>
-                <td className="tnum border-b border-line py-3 pr-4">
-                  <span
-                    className={
-                      row.back === 100
-                        ? 'font-semibold text-ok'
-                        : row.back === 0
-                          ? 'font-semibold text-warn'
-                          : 'font-semibold text-ink'
-                    }
-                  >
-                    {row.back}%
-                  </span>
-                </td>
-                <td className="tnum border-b border-line py-3 pr-4 text-muted">
-                  {formatUzs((exampleAmount * row.back) / 100)}
-                </td>
-                <td className="border-b border-line py-3 text-muted">{row.note}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <section
+      id="shartlar"
+      className="mx-auto grid max-w-6xl gap-8 px-5 py-16 sm:px-8 lg:grid-cols-[.85fr_1.15fr] lg:gap-16"
+    >
+      <div>
+        <p className="eyebrow">SAVDODAN OLDIN</p>
+        <h2 className="mt-3 text-3xl font-bold">
+          Shartlar ochiq.
+          <br />
+          Qaror sizniki.
+        </h2>
+        <p className="mt-4 text-sm leading-7 text-muted">
+          Ma’lumotni ochishdan oldin qaytarish shartlarini ko‘ring. Yakuniy
+          summa buyurtmadagi “Qaytarish” bo‘limida hisoblanadi.
+        </p>
+        <a
+          className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-accent"
+          href="https://t.me/bitimax_admin"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Yordam bilan bog‘lanish <Icon name="arrow" width={17} />
+        </a>
       </div>
-
-      <div className="mt-6 space-y-2.5 sm:hidden">
-        {rows.map((row) => (
-          <div key={row.window} className="surface flex items-center justify-between gap-3 p-4">
-            <div>
-              <p className="font-medium text-ink">{row.window}</p>
-              <p className="mt-0.5 text-xs text-muted">{row.note}</p>
-            </div>
-            <div className="text-right">
-              <p
-                className={`tnum text-lg font-bold ${
-                  row.back === 100 ? 'text-ok' : row.back === 0 ? 'text-warn' : 'text-ink'
-                }`}
-              >
-                {row.back}%
+      <div className="surface divide-y divide-line overflow-hidden">
+        {policy ? (
+          <>
+            <div className="p-5">
+              <h3 className="font-semibold">Ma’lumot hali ochilmagan bo‘lsa</h3>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Pul to‘liq qaytariladi. Ma’lumot {policy.unrevealedGraceHours}{" "}
+                soat ochilmasa, tizim avtomatik qaytarishni bajaradi.
               </p>
-              <p className="tnum text-xs text-faint">{formatUzs((exampleAmount * row.back) / 100)}</p>
             </div>
+            <div className="p-5">
+              <h3 className="font-semibold">Ma’lumotni ochgandan keyin</h3>
+              <ul className="mt-3 space-y-3">
+                {policy.refundTiers.map((t) => (
+                  <li key={t.id} className="flex justify-between gap-4 text-sm">
+                    <span className="text-muted">{t.label}</span>
+                    <span className="shrink-0 font-semibold">
+                      {t.allowed
+                        ? `${100 - t.penaltyPercent}% qaytadi`
+                        : "Nizo orqali"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-xs leading-5 text-muted">
+                Tekshirish uchun {policy.autoReleaseHours} soat. Tasdiqlasangiz
+                yoki muddat tugasa, bitim avtomatik yakunlanadi. Ochiq nizo
+                alohida ko‘rib chiqiladi.
+              </p>
+            </div>
+          </>
+        ) : (
+          <div className="p-5 text-sm leading-7 text-muted">
+            Amaldagi qaytarish foizlari va muddatlari buyurtmada ko‘rsatiladi.
+            To‘lov qilishdan oldin ularni tekshiring yoki yordam xizmatiga
+            murojaat qiling.
           </div>
-        ))}
+        )}
+        <details className="p-5">
+          <summary className="cursor-pointer font-semibold">
+            Saytda ham to‘liq savdo qila olamanmi?
+          </summary>
+          <p className="mt-3 text-sm leading-6 text-muted">
+            Ha. Telegram orqali kirib, saytda e’lon berish, to‘lash, ma’lumotni
+            ochish, bitimni tasdiqlash va hamyondan pul yechishni so‘rash
+            mumkin.
+          </p>
+        </details>
+        <details className="p-5">
+          <summary className="cursor-pointer font-semibold">
+            To‘lovdan keyin holat o‘zgarmasa-chi?
+          </summary>
+          <p className="mt-3 text-sm leading-6 text-muted">
+            To‘lov sahifasida holatni yangilang. Natija tekshirilayotgan bo‘lsa,
+            qayta pul yubormang. Buyurtma raqami bilan yordam xizmatiga yozing.
+          </p>
+        </details>
       </div>
-
-      <p className="mt-4 text-xs leading-relaxed text-faint">
-        Ko‘rsatilgan foiz — aynan qo‘lingizga tegadigan summa. Platforma komissiyasi qaytarilgan
-        puldan emas, faqat jarima qismidan olinadi.
-      </p>
     </section>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { botLink } from '@/lib/api';
 
 /**
@@ -11,10 +11,21 @@ import { botLink } from '@/lib/api';
  */
 export function MobileNav({ authed = false }: { authed?: boolean }) {
   const [open, setOpen] = useState(false);
+  const container = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (e: PointerEvent) => { if (!container.current?.contains(e.target as Node)) setOpen(false); };
+    const escape = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); button.current?.focus(); } };
+    document.addEventListener('pointerdown', outside); document.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); };
+  }, [open]);
 
   return (
-    <div className="relative sm:hidden">
+    <div ref={container} className="relative sm:hidden">
       <button
+        ref={button}
+        aria-controls="mobile-navigation"
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Menyuni yopish' : 'Menyuni ochish'}
@@ -41,7 +52,7 @@ export function MobileNav({ authed = false }: { authed?: boolean }) {
       </button>
 
       {open && (
-        <div className="surface absolute right-0 top-full mt-2 w-48 overflow-hidden py-1 shadow-lg">
+        <div id="mobile-navigation" className="surface absolute right-0 top-full mt-2 w-48 overflow-hidden py-1 shadow-lg">
           <Link
             href="/#katalog"
             onClick={() => setOpen(false)}

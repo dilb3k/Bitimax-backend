@@ -72,12 +72,13 @@ export async function backendFetch(path: string, init: RequestInit = {}): Promis
     ...init,
     headers: requestHeaders,
     cache: 'no-store',
+    signal: init.signal || AbortSignal.timeout(25000),
   });
 }
 
 /** Unauthenticated backend call (login pairing endpoints). */
 export function publicBackendFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  return fetch(`${BACKEND_URL}${path}`, { ...init, cache: 'no-store' });
+  return fetch(`${BACKEND_URL}${path}`, { ...init, cache: 'no-store', signal: init.signal || AbortSignal.timeout(25000) });
 }
 
 export function clearSession(response: NextResponse) {

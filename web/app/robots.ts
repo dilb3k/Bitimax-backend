@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitmax.uz';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitimax.uz';
 
 export default function robots(): MetadataRoute.Robots {
   return {

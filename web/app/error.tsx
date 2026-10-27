@@ -13,7 +13,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   }, [error]);
 
   return (
-    <main className="mx-auto flex max-w-lg flex-col items-center px-5 py-20 text-center sm:px-8">
+    <main id="main-content" className="mx-auto flex max-w-lg flex-col items-center px-5 py-20 text-center sm:px-8">
       <p className="text-4xl" aria-hidden="true">
         ⚠️
       </p>

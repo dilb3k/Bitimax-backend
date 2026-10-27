@@ -55,6 +55,9 @@ export interface OrderSummary {
 export interface PendingPayment {
   id: string;
   status: 'pending_payment' | 'expired';
+  paymentAmount: number;
+  paymentProvider: 'sms' | 'tezcheck';
+  paymentReview: boolean;
   title: string;
   uniqueAmount: number;
   createdAt: string;
@@ -170,12 +173,13 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...init,
       // Same-origin by default, stated explicitly because the whole auth model depends on it.
       credentials: 'same-origin',
+      signal: init.signal || AbortSignal.timeout(30000),
       headers: init.body && !(init.headers as any)?.['Content-Type']
         ? { 'Content-Type': 'application/json', ...(init.headers || {}) }
         : init.headers,
     });
   } catch {
-    throw new ApiError('Internet aloqasi yo‘q — qaytadan urinib ko‘ring', 0);
+    throw new ApiError('Server bilan aloqa uzildi. Amal bajarilgan bo‘lishi mumkin — qayta yuborishdan oldin holatni tekshiring.', 0);
   }
 
   const text = await response.text();
@@ -287,5 +291,6 @@ export const api = {
 };
 
 export async function logout(): Promise<void> {
-  await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+  const response = await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin', signal: AbortSignal.timeout(30000) });
+  if (!response.ok) throw new Error('Sessiyalarni bekor qilib bo‘lmadi');
 }

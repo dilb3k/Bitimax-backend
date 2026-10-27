@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeNextPath } from '@/lib/navigation';
 import { Loading, Notice, Spinner } from './ui';
 
 type Phase = 'starting' | 'waiting' | 'approved' | 'denied' | 'expired' | 'error';
@@ -36,10 +37,7 @@ export function LoginPanel() {
    * `/kirish?next=https://evil.example` would turn our own login into a credible redirect to
    * someone else's copy of it.
    */
-  const nextPath = (() => {
-    const raw = params.get('next') || '';
-    return raw.startsWith('/') && !raw.startsWith('//') ? raw : '/kabinet';
-  })();
+  const nextPath = safeNextPath(params.get('next'));
 
   const stopPolling = useCallback(() => {
     if (pollTimer.current) clearInterval(pollTimer.current);
@@ -74,10 +72,15 @@ export function LoginPanel() {
   useEffect(() => {
     if (phase !== 'waiting') return;
 
+    let inFlight = false;
+    let cancelled = false;
     pollTimer.current = setInterval(async () => {
+      if (inFlight) return;
+      inFlight = true;
       try {
         const response = await fetch('/api/auth/poll', { credentials: 'same-origin' });
         const data = await response.json();
+        if (cancelled) return;
 
         if (data.status === 'approved') {
           stopPolling();
@@ -91,10 +94,10 @@ export function LoginPanel() {
         }
       } catch {
         // A dropped poll is not a failed login — the next tick retries.
-      }
+      } finally { inFlight = false; }
     }, 2000);
 
-    return stopPolling;
+    return () => { cancelled = true; stopPolling(); };
   }, [phase, nextPath, router, stopPolling]);
 
   if (phase === 'starting') return <Loading label="Kirish so‘rovi tayyorlanmoqda…" />;
@@ -156,8 +159,7 @@ export function LoginPanel() {
       </ol>
 
       <p className="mt-6 border-t border-line pt-4 text-xs leading-relaxed text-faint">
-        Bitmax parol so‘ramaydi. Kirish faqat botdagi tasdiq orqali amalga oshadi — shuning uchun
-        parolingiz o‘g‘irlanishi ham mumkin emas.
+        Bitmax parol so‘ramaydi. Kirish botdagi tasdiq orqali amalga oshadi. Faqat o‘zingiz boshlagan kirish so‘rovini tasdiqlang.
       </p>
     </div>
   );

@@ -48,6 +48,7 @@ export function SellView() {
 
   return (
     <div className="space-y-8">
+      <div><p className="eyebrow">SOTUVCHI MAYDONI</p><h1 className="page-title mt-2">Sotuvlarim</h1><p className="mt-2 text-sm text-muted">E’lon joylang, shaxsiy bitim yarating va natijani kuzating.</p></div>
       <div className="flex flex-wrap gap-2.5">
         <Link href="/kabinet/yangi" className="btn-accent text-sm">
           <span aria-hidden="true">＋</span> Yangi e’lon
@@ -106,13 +107,13 @@ export function SellView() {
                   </div>
                   <div className="ml-auto flex gap-2">
                     <CopyButton value={listing.dealCode} />
-                    <SubmitButton
+                    {['active', 'pending_review', 'draft'].includes(listing.status) && <SubmitButton
                       busy={busyId === listing.id}
                       onClick={() => cancel(listing.id)}
                       className="btn-ghost px-2.5 py-1.5 text-xs"
                     >
                       Bekor qilish
-                    </SubmitButton>
+                    </SubmitButton>}
                   </div>
                 </div>
               )}

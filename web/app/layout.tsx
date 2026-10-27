@@ -19,7 +19,7 @@ const body = Manrope({
   display: 'swap',
 });
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitmax.uz';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitimax.uz';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
@@ -28,12 +28,12 @@ export const metadata: Metadata = {
     template: '%s · Bitmax',
   },
   description:
-    'Pulingiz siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi. Bitmax — P2P escrow (kafil) ' +
+    'Raqamli savdo, himoyalangan to‘lov va kafil bitimlar bir joyda. Bitmax — P2P escrow (kafil) ' +
     'tizimida ishlaydigan raqamli akkauntlar bozori.',
   keywords: ['escrow', 'kafil', 'garant', 'akkaunt sotish', 'Telegram akkaunt', 'Bitmax'],
   openGraph: {
     title: 'Bitmax — Kafil bilan xavfsiz raqamli bozor',
-    description: 'Pulingiz siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi.',
+    description: 'Raqamli savdo, himoyalangan to‘lov va kafil bitimlar bir joyda.',
     type: 'website',
     locale: 'uz_UZ',
     siteName: 'Bitmax',
@@ -44,8 +44,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FAF8F4' },
-    { media: '(prefers-color-scheme: dark)', color: '#0F1216' },
+    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+    { media: '(prefers-color-scheme: dark)', color: '#020617' },
   ],
 };
 

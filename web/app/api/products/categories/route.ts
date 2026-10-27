@@ -6,6 +6,7 @@ export async function GET() {
   try {
     const res = await fetch(`${BACKEND_URL}/api/products/categories`, {
       headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(25000),
       next: { revalidate: 60 },
     });
 

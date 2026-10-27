@@ -11,8 +11,8 @@ export default function StartPurchasePage({ params }: { params: { id: string } }
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-lg px-5 py-10 sm:px-8 sm:py-14">
-        <StartPurchase productId={params.id} />
+      <main id="main-content" className="mx-auto max-w-lg px-5 py-10 sm:px-8 sm:py-14">
+        <StartPurchase key={params.id} productId={params.id} />
       </main>
       <Footer />
     </>

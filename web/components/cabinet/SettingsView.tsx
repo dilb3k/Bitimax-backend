@@ -46,13 +46,13 @@ export function SettingsView() {
 
   async function signOutEverywhere() {
     setBusy('logout');
-    await logout();
-    router.replace('/');
-    router.refresh();
+    try { await logout(); router.replace('/'); router.refresh(); }
+    catch { setNotice('Chiqib bo‘lmadi. Qayta urinib ko‘ring.'); setBusy(null); }
   }
 
   return (
     <div className="space-y-6">
+      <div><p className="eyebrow">PROFIL</p><h1 className="page-title mt-2">Sozlamalar</h1><p className="mt-2 text-sm text-muted">Hisobingiz va Telegram bildirishnomalarini boshqaring.</p></div>
       <div className="surface p-5 sm:p-6">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft font-display text-lg font-bold text-ink">
@@ -129,7 +129,7 @@ export function SettingsView() {
       </div>
 
       <div className="surface p-5 sm:p-6">
-        <h2 className="font-semibold text-ink">Til</h2>
+        <h2 className="font-semibold text-ink">Telegram bot tili</h2>
         <div className="mt-3 flex gap-2">
           {(['uz', 'ru'] as const).map((code) => (
             <button
@@ -149,7 +149,7 @@ export function SettingsView() {
         <h2 className="font-semibold text-ink">Xavfsizlik</h2>
         <p className="mt-1 text-sm leading-relaxed text-muted">
           “Hamma qurilmadan chiqish” barcha brauzerlardagi sessiyalarni bekor qiladi. Kirish
-          har safar botdagi tasdiq bilan tiklanadi — parol yo‘q, demak o‘g‘irlanadigan parol ham yo‘q.
+          har safar botdagi tasdiq bilan tiklanadi. Faqat o‘zingiz boshlagan kirish so‘rovini tasdiqlang.
         </p>
         <SubmitButton busy={busy === 'logout'} onClick={signOutEverywhere} className="btn-ghost mt-4">
           Hamma qurilmadan chiqish

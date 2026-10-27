@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/cabinet';
-import { Product, formatUzs } from '@/lib/api';
+import { Product, PublicPolicy, formatUzs } from '@/lib/api';
 import { ErrorState, Loading, Notice, SubmitButton } from './ui';
 
 /**
@@ -16,6 +16,7 @@ import { ErrorState, Loading, Notice, SubmitButton } from './ui';
  */
 export function StartPurchase({ productId }: { productId: string }) {
   const router = useRouter();
+  const [policy, setPolicy] = useState<PublicPolicy | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -26,7 +27,11 @@ export function StartPurchase({ productId }: { productId: string }) {
     let alive = true;
     (async () => {
       try {
-        const response = await fetch(`/api/products/${encodeURIComponent(productId)}`);
+        const [response, policyResponse] = await Promise.all([
+          fetch(`/api/products/${encodeURIComponent(productId)}`, { signal: AbortSignal.timeout(25000) }),
+          fetch('/api/products/policy', { signal: AbortSignal.timeout(25000) }),
+        ]);
+        if (policyResponse.ok && alive) setPolicy(await policyResponse.json());
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Mahsulot topilmadi');
         if (alive) setProduct(data.product);
@@ -70,10 +75,10 @@ export function StartPurchase({ productId }: { productId: string }) {
 
       <ol className="mt-7 space-y-3 text-sm leading-relaxed text-muted">
         {[
-          'Bandlik 10 daqiqaga ochiladi — bu vaqtda mahsulotni boshqa hech kim sotib ololmaydi.',
-          'Sizga aynan bir xil bo‘lmagan summa beriladi — bank xabari shu summa orqali sizni tanidi.',
+          policy ? `Mahsulot ${policy.paymentWindowMinutes} daqiqaga siz uchun band qilinadi.` : 'To‘lov sahifasida mahsulot bandligi muddati ko‘rsatiladi.',
+          policy?.paymentProvider === 'sms' ? 'To‘lov sahifasidagi aniq summani ko‘rsatilgan kartaga yuboring.' : 'To‘lov sahifasidagi havola orqali to‘lang. Karta ma’lumotlari Bitmax’ga kiritilmaydi.',
           'To‘lov tasdiqlangach, ma’lumotlarni ochasiz va tekshirasiz.',
-          'Hammasi joyida bo‘lsa tasdiqlaysiz — pul faqat shundan keyin sotuvchiga o‘tadi.',
+          policy ? `Tekshirgach tasdiqlaysiz. Ma’lumot ochilgandan ${policy.autoReleaseHours} soat keyin bitim avtomatik yakunlanadi.` : 'Tekshirgach tasdiqlaysiz. Avtomatik yakunlash muddatini buyurtmada kuzating.',
         ].map((step, index) => (
           <li key={step} className="flex gap-3">
             <span className="tnum mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-bold text-ink">
@@ -90,12 +95,12 @@ export function StartPurchase({ productId }: { productId: string }) {
         </div>
       )}
 
-      <SubmitButton busy={busy} onClick={start} className="btn-accent mt-7 w-full">
-        {busy ? 'Ochilmoqda…' : 'Bandlik ochish va to‘lovga o‘tish'}
+      <SubmitButton busy={busy} disabled={product.status !== 'active'} onClick={start} className="btn-accent mt-7 w-full">
+        {product.status !== 'active' ? (product.status === 'sold' ? 'Mahsulot sotilgan' : 'Mahsulot hozir band') : busy ? 'Ochilmoqda…' : 'Band qilish va to‘lovga o‘tish'}
       </SubmitButton>
 
       <p className="mt-3 text-center text-xs text-faint">
-        Bandlik 10 daqiqada tugaydi. To‘lov qilmasangiz hech narsa yechilmaydi.
+        Bu tugma pul yechmaydi. To‘lovni keyingi sahifada amalga oshirasiz.
       </p>
     </>
   );

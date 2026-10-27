@@ -40,10 +40,11 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-ground/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface focus:p-3">Asosiy qismga o‘tish</a>
+      <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <Logo priority />
-          <span className="hidden text-xs text-faint sm:inline">kafil bilan savdo</span>
+          <span className="hidden text-xs text-faint sm:inline">Raqamli bozor</span>
         </Link>
 
         <nav className="flex items-center gap-2">
@@ -53,6 +54,7 @@ export function Header() {
           <Link href="/kod" className="hidden px-3 py-2 text-sm text-muted hover:text-ink sm:block">
             Kod bilan
           </Link>
+          <Link href="/kabinet/yangi" className="hidden items-center gap-1 px-3 py-2 text-sm font-semibold text-accent lg:flex">+ E’lon berish</Link>
           <ThemeToggle />
           <Link href={user ? '/kabinet' : '/kirish'} className="hidden btn-accent px-3.5 py-2 text-sm sm:inline-flex">
             {user ? 'Kabinet' : 'Kirish'}
@@ -126,7 +128,7 @@ export function Footer() {
               <p className="font-display text-lg font-bold text-ink">Bitmax</p>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-muted">
-              P2P escrow bozori. Pul kafilda saqlanadi, xaridor tasdiqlagach sotuvchiga o‘tadi.
+              Raqamli savdo uchun kafil. E’lon, to‘lov va bitimni boshqarish — web va Telegram’da.
             </p>
           </div>
 
@@ -166,7 +168,7 @@ export function Footer() {
                 </li>
                 <li>
                   <a
-                    href="https://t.me/bitmax_admin"
+                    href="https://t.me/bitimax_admin"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted hover:text-ink"

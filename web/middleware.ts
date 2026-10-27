@@ -39,6 +39,7 @@ export function middleware(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('x-pathname', request.nextUrl.pathname + request.nextUrl.search);
   // Next reads the nonce back out of this request header to stamp its own script tags.
   requestHeaders.set('Content-Security-Policy', csp);
 
@@ -52,10 +53,7 @@ export const config = {
     // Everything except static assets and image optimizer output, which carry no markup.
     {
       source: '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico)$).*)',
-      missing: [
-        { type: 'header', key: 'next-router-prefetch' },
-        { type: 'header', key: 'purpose', value: 'prefetch' },
-      ],
+
     },
   ],
 };

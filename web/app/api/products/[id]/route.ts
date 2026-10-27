@@ -6,6 +6,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   try {
     const res = await fetch(`${BACKEND_URL}/api/products/${encodeURIComponent(params.id)}`, {
       headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(25000),
       next: { revalidate: 30 },
     });
 

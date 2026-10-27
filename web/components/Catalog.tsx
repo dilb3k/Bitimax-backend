@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   CategoryCount,
@@ -78,6 +79,7 @@ export function Catalog() {
         { page, category, search, sort, minPrice, maxPrice },
         controller.signal
       );
+      if (controller.signal.aborted) return;
       setProducts(data.products);
       setPagination(data.pagination);
     } catch (err) {
@@ -102,7 +104,7 @@ export function Catalog() {
     <section id="katalog" className="mx-auto max-w-6xl px-5 py-14 sm:px-8">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-ink sm:text-3xl">Katalog</h2>
+          <p className="eyebrow mb-2">O‘ZINGIZGA MOSINI TOPING</p><h2 className="text-3xl font-bold text-ink sm:text-4xl">Raqamli katalog</h2>
           <p className="mt-1.5 text-sm text-muted">
             {loading && products.length === 0 ? (
               'Yuklanmoqda…'
@@ -120,6 +122,7 @@ export function Catalog() {
             <button
               key={option.value}
               type="button"
+              aria-pressed={sort === option.value}
               onClick={() => {
                 setSort(option.value);
                 setPage(1);
@@ -136,7 +139,7 @@ export function Catalog() {
         </div>
       </div>
 
-      <div className="mb-5">
+      <div className="surface mb-5 p-4 sm:p-5">
         <label className="sr-only" htmlFor="qidiruv">
           Qidirish
         </label>
@@ -157,7 +160,7 @@ export function Catalog() {
             type="search"
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Akkaunt nomi, tavsifi yoki tegi bo‘yicha qidiring…"
+            placeholder="Nima qidiryapsiz?"
             className="field pl-10"
           />
         </div>
@@ -193,6 +196,7 @@ export function Catalog() {
         <button
           type="button"
           onClick={() => pickCategory('')}
+          aria-pressed={category === ''}
           className={`chip ${category === '' ? 'chip-on' : ''}`}
         >
           Barchasi
@@ -202,6 +206,7 @@ export function Catalog() {
             key={item.category}
             type="button"
             onClick={() => pickCategory(item.category)}
+            aria-pressed={category === item.category}
             className={`chip ${category === item.category ? 'chip-on' : ''}`}
           >
             {item.category}
@@ -257,8 +262,9 @@ function EmptyState({ hasFilters, onReset }: { hasFilters: boolean; onReset: () 
       <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
         {hasFilters
           ? 'Boshqa kalit so‘z bilan qidiring yoki kategoriyani o‘zgartiring.'
-          : 'Birinchi e’lonlar tez orada paydo bo‘ladi. Botga kirib xabardor bo‘lib turing.'}
+          : 'Raqamli mahsulotingizni soting yoki tayyor kelishuv uchun kafil bitim yarating.'}
       </p>
+      {!hasFilters && <Link href="/kabinet/yangi" className="btn-accent mt-5">Birinchi e’lonni berish</Link>}
       {hasFilters && (
         <button type="button" onClick={onReset} className="btn-ghost mt-5">
           Filtrlarni tozalash

@@ -114,17 +114,19 @@ export function useAsync<T>(loader: () => Promise<T>, deps: unknown[] = []) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const alive = useRef(true);
+  const sequence = useRef(0);
 
   const run = useCallback(async () => {
+    const request = ++sequence.current;
     setLoading(true);
     setError(null);
     try {
       const result = await loader();
-      if (alive.current) setData(result);
+      if (alive.current && request === sequence.current) setData(result);
     } catch (err: any) {
-      if (alive.current) setError(err?.message || 'Xatolik yuz berdi');
+      if (alive.current && request === sequence.current) setError(err?.message || 'Xatolik yuz berdi');
     } finally {
-      if (alive.current) setLoading(false);
+      if (alive.current && request === sequence.current) setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
@@ -134,28 +136,30 @@ export function useAsync<T>(loader: () => Promise<T>, deps: unknown[] = []) {
     run();
     return () => {
       alive.current = false;
+      sequence.current++;
     };
   }, [run]);
 
-  return { data, error, loading, reload: run, setData };
+  return { data, error, loading: loading && data === null, refreshing: loading, reload: run, setData };
 }
 
 /** Live "3:41 qoldi" for payment windows and auto-release deadlines. */
 export function Countdown({ to, onDone }: { to: string; onDone?: () => void }) {
   const [left, setLeft] = useState(() => Math.max(0, new Date(to).getTime() - Date.now()));
-  const done = useRef(false);
-
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
   useEffect(() => {
-    const timer = setInterval(() => {
-      const remaining = Math.max(0, new Date(to).getTime() - Date.now());
+    let done = false;
+    const tick = () => {
+      const deadline = new Date(to).getTime();
+      const remaining = Number.isFinite(deadline) ? Math.max(0, deadline - Date.now()) : 0;
       setLeft(remaining);
-      if (remaining === 0 && !done.current) {
-        done.current = true;
-        onDone?.();
-      }
-    }, 1000);
+      if (remaining === 0 && !done) { done = true; onDoneRef.current?.(); }
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [to, onDone]);
+  }, [to]);
 
   const totalSeconds = Math.floor(left / 1000);
   const minutes = Math.floor(totalSeconds / 60);

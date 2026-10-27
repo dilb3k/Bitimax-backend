@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitmax.uz';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitimax.uz';
 
 /** Refreshed hourly — new listings should be findable without a redeploy. */
 export const revalidate = 3600;
@@ -17,6 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const response = await fetch(`${backend}/api/products?limit=100&sort=-createdAt`, {
       next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(8000),
     });
     if (!response.ok) return staticRoutes;
 

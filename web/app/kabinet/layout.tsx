@@ -1,7 +1,8 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Header, Footer } from '@/components/Chrome';
 import { CabinetNav } from '@/components/cabinet/CabinetNav';
+import { safeNextPath } from '@/lib/navigation';
 import { SESSION_COOKIE } from '@/lib/server/session';
 
 /**
@@ -13,14 +14,14 @@ import { SESSION_COOKIE } from '@/lib/server/session';
  * trade is decided by the backend on every single request behind `/api/me`.
  */
 export default function CabinetLayout({ children }: { children: React.ReactNode }) {
-  if (!cookies().get(SESSION_COOKIE)?.value) redirect('/kirish?next=/kabinet');
+  if (!cookies().get(SESSION_COOKIE)?.value) redirect(`/kirish?next=${encodeURIComponent(safeNextPath(headers().get('x-pathname')))}`);
 
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-12">
+      <main id="main-content" className="mx-auto grid min-h-[70vh] max-w-6xl gap-8 px-5 py-8 pb-24 sm:px-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:py-10">
         <CabinetNav />
-        {children}
+        <div className="min-w-0">{children}</div>
       </main>
       <Footer />
     </>

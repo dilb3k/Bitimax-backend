@@ -11,12 +11,12 @@ export default function PaymentPage({ params }: { params: { id: string } }) {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-lg px-5 py-10 sm:px-8 sm:py-14">
+      <main id="main-content" className="mx-auto max-w-lg px-5 py-10 sm:px-8 sm:py-14">
         <h1 className="mb-1 text-2xl font-bold text-ink">To‘lov</h1>
         <p className="mb-6 text-sm text-muted">
-          Pul kafilda saqlanadi — siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi.
+          To‘lovni yakunlang va akkauntni tekshirishga o‘ting.
         </p>
-        <PaymentPanel transactionId={params.id} />
+        <PaymentPanel key={params.id} transactionId={params.id} />
       </main>
       <Footer />
     </>

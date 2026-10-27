@@ -19,16 +19,12 @@ const TRUST_STYLE: Record<string, string> = {
 async function getProduct(id: string): Promise<Product | null> {
   const backend = process.env.BACKEND_URL;
   if (!backend) return null;
-  try {
-    const res = await fetch(`${backend}/api/products/${encodeURIComponent(id)}`, {
-      next: { revalidate: 30 },
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.product ?? null;
-  } catch {
-    return null;
-  }
+  const res = await fetch(`${backend}/api/products/${encodeURIComponent(id)}`, {
+    cache: 'no-store', signal: AbortSignal.timeout(15000),
+  });
+  if (res.status === 404 || res.status === 400) return null;
+  if (!res.ok) throw new Error('Mahsulotni yuklab bo‘lmadi');
+  return (await res.json()).product ?? null;
 }
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
@@ -49,7 +45,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
   return (
     <>
       <Header />
-      <main>
+      <main id="main-content">
         <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
           <Link href="/#katalog" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
             ← Katalogga qaytish
@@ -95,9 +91,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
               <p className="tnum mt-6 text-3xl font-bold text-ink">{formatUzs(product.price)}</p>
 
               <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
-                <Link href={`/sotib-olish/${product._id}`} className="btn-accent sm:px-6">
-                  Sotib olish
-                </Link>
+                {product.status === 'active' ? <Link href={`/sotib-olish/${product._id}`} className="btn-accent sm:px-6">Sotib olish</Link> : <span className="btn-ghost text-muted">{product.status === 'sold' ? 'Sotilgan' : 'Hozir band'}</span>}
                 <a
                   href={botLink(product._id)}
                   target="_blank"
@@ -109,7 +103,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
               </div>
 
               <div className="surface mt-6 p-4 text-sm leading-relaxed text-muted">
-                🛡 Pul kafilda saqlanadi — akkauntni tekshirmaguningizcha sotuvchiga o‘tmaydi.
+                Pul kafilda saqlanadi. Tekshirish va avtomatik yakunlash muddati buyurtmada ko‘rsatiladi.
                 Login/parol to‘lov tasdiqlangandan keyin, faqat sizga ochiladi.
               </div>
 

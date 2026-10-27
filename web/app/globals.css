@@ -20,7 +20,7 @@
     --line: 226 232 240; /* slate-200 */
     --ink: 15 23 42; /* slate-900 */
     --muted: 71 85 105; /* slate-600 */
-    --faint: 148 163 184; /* slate-400 */
+    --faint: 100 116 139; /* slate-400 */
 
     --accent: 14 116 144; /* cyan-700 — white text on this is ~5.3:1 */
     --accent-hover: 21 94 117; /* cyan-800 */
@@ -39,7 +39,7 @@
     --line: 51 65 85; /* slate-700 */
     --ink: 226 232 240; /* slate-200 */
     --muted: 148 163 184; /* slate-400 */
-    --faint: 100 116 139; /* slate-500 — the brand's second colour, in its natural role */
+    --faint: 148 163 184; /* slate-500 — the brand's second colour, in its natural role */
 
     --accent: 34 211 238; /* cyan-400 — the brand colour, at full strength */
     --accent-hover: 103 232 249; /* cyan-300 */
@@ -57,6 +57,7 @@
 
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: 100px;
   }
 
   body {
@@ -92,8 +93,12 @@
 }
 
 @layer components {
+  .eyebrow { @apply flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.16em] text-accent; }
+  .hero-grid { background-image: radial-gradient(rgb(var(--accent) / .13) 1px, transparent 1px); background-size: 22px 22px; mask-image: linear-gradient(110deg, transparent 15%, black); }
+  .page-title { @apply text-3xl font-bold tracking-tight text-ink sm:text-4xl; }
+
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg font-medium
+    @apply inline-flex items-center justify-center gap-2 min-h-[44px] rounded-xl font-semibold
            transition-colors duration-150 disabled:opacity-45 disabled:cursor-not-allowed;
   }
   .btn-accent {

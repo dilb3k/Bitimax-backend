@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
 
     const res = await fetch(`${BACKEND_URL}/api/products?${params}`, {
       headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(25000),
       next: { revalidate: 30 },
     });
 

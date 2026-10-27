@@ -10,11 +10,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    await backendFetch('/api/auth/logout', { method: 'POST' });
-  } catch {
-    // A backend hiccup must not strand the user in a half-logged-in state: the cookies go
-    // regardless, and the session token expires on its own.
+    const upstream = await backendFetch('/api/auth/logout', { method: 'POST' });
+    if (!upstream.ok && upstream.status !== 401) {
+      return NextResponse.json({ error: 'Sessiyalarni bekor qilib bo‘lmadi. Qayta urinib ko‘ring.' }, { status: 502 });
+    }
+  } catch (error: any) {
+    if (error?.message !== 'NO_SESSION') return NextResponse.json({ error: 'Server bilan aloqa uzildi. Qayta urinib ko‘ring.' }, { status: 502 });
   }
-
   return clearSession(NextResponse.json({ ok: true }));
 }

@@ -86,6 +86,11 @@ export function SellerForm({ mode }: { mode: Mode }) {
     }
   }
 
+  function reset() {
+    setDeal(null); setListingDone(false); setTitle(''); setDescription(''); setPrice('');
+    setCategory(''); setLogin(''); setPassword(''); setRecoveryCode(''); setImages([]); setShowPassword(false); setError(null);
+  }
+
   if (deal) {
     return (
       <div className="surface p-6 sm:p-8">
@@ -123,9 +128,7 @@ export function SellerForm({ mode }: { mode: Mode }) {
           <Link href="/kabinet/sotuv" className="btn-accent text-sm">
             E’lonlarim
           </Link>
-          <Link href="/kabinet/bitim" className="btn-ghost text-sm">
-            Yana bitim yaratish
-          </Link>
+          <button type="button" onClick={reset} className="btn-ghost text-sm">Yana bitim yaratish</button>
         </div>
       </div>
     );
@@ -145,16 +148,14 @@ export function SellerForm({ mode }: { mode: Mode }) {
           <Link href="/kabinet/sotuv" className="btn-accent text-sm">
             E’lonlarim
           </Link>
-          <Link href="/kabinet/yangi" className="btn-ghost text-sm">
-            Yana e’lon berish
-          </Link>
+          <button type="button" onClick={reset} className="btn-ghost text-sm">Yana e’lon berish</button>
         </div>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5" noValidate>
+    <form onSubmit={submit} className="space-y-5">
       <div className="surface space-y-4 p-5 sm:p-6">
         <Field label="Nomi" hint={mode === 'deal' ? '3–120 belgi' : '5–120 belgi'}>
           <input

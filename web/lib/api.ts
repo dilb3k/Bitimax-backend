@@ -8,6 +8,7 @@ export interface Seller {
 
 export interface Product {
   _id: string;
+  status: 'active' | 'reserved' | 'sold';
   title: string;
   description: string;
   price: number;
@@ -30,6 +31,15 @@ export interface Pagination {
 export interface CategoryCount {
   category: string;
   count: number;
+}
+
+export interface PublicPolicy {
+  commission: number;
+  paymentProvider: 'sms' | 'tezcheck';
+  paymentWindowMinutes: number;
+  autoReleaseHours: number;
+  unrevealedGraceHours: number;
+  refundTiers: { id: string; label: string; penaltyPercent: number; allowed: boolean }[];
 }
 
 export interface PlatformStats {
@@ -130,6 +140,6 @@ export async function fetchStats(): Promise<PlatformStats | null> {
 }
 
 export function botLink(productId?: string): string {
-  const username = process.env.NEXT_PUBLIC_BOT_USERNAME || 'bitmax_bot';
+  const username = process.env.NEXT_PUBLIC_BOT_USERNAME || 'bitimax_bot';
   return productId ? `https://t.me/${username}?start=buy_${productId}` : `https://t.me/${username}`;
 }

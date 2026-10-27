@@ -5,7 +5,7 @@ export default function NotFound() {
   return (
     <>
       <Header />
-      <main className="mx-auto flex max-w-lg flex-col items-center px-5 py-20 text-center sm:px-8">
+      <main id="main-content" className="mx-auto flex max-w-lg flex-col items-center px-5 py-20 text-center sm:px-8">
         <p className="font-display text-5xl font-extrabold text-faint">404</p>
         <h1 className="mt-4 text-2xl font-bold text-ink">Bunday sahifa yo‘q</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted">

@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'Bitmax — pulingiz siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi';
+export const alt = 'Bitmax — raqamli savdo uchun kafil';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -58,7 +58,7 @@ export default function OpengraphImage() {
             maxWidth: 940,
           }}
         >
-          Pulingiz siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi.
+          Kelishuv sizdan. Kafillik bizdan.
         </div>
 
         <div style={{ display: 'flex', gap: 40, alignItems: 'center' }}>

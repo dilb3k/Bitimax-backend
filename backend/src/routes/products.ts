@@ -6,6 +6,18 @@ import { config } from '../config';
 
 const router = Router();
 
+// Public policy contains only trading rules; credentials and provider configuration stay private.
+router.get('/policy', (_req: Request, res: Response) => {
+  res.json({
+    commission: config.platformCommission,
+    paymentProvider: config.paymentProvider,
+    paymentWindowMinutes: config.paymentWindowMinutes,
+    autoReleaseHours: config.autoReleaseHours,
+    unrevealedGraceHours: config.unrevealedGraceHours,
+    refundTiers: config.refundTiers,
+  });
+});
+
 const ALLOWED_SORT = new Set(['-createdAt', 'createdAt', '-price', 'price']);
 
 router.get('/', async (req: Request, res: Response) => {
