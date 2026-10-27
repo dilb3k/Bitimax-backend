@@ -27,6 +27,10 @@ export interface IPaymentInbox extends Document {
   resolvedBy?: mongoose.Types.ObjectId;
   resolvedAt?: Date;
   resolutionNote?: string;
+  /** Muting reminders does not resolve or discard the payment. */
+  reminderMuted?: boolean;
+  reminderChangedBy?: mongoose.Types.ObjectId;
+  reminderChangedAt?: Date;
 
   createdAt: Date;
   updatedAt: Date;
@@ -51,6 +55,9 @@ const PaymentInboxSchema = new Schema<IPaymentInbox>(
     resolvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     resolvedAt: { type: Date },
     resolutionNote: { type: String },
+    reminderMuted: { type: Boolean, default: false },
+    reminderChangedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    reminderChangedAt: Date,
   },
   { timestamps: true }
 );

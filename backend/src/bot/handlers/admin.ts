@@ -487,22 +487,47 @@ adminHandler.hears('📥 To‘lov inbox', async (ctx) => {
     return;
   }
 
-  const lines = unmatched.map(
-    (item) =>
-      `• <b>${item.parsedAmount ? formatUzs(item.parsedAmount) : '—'}</b> — ` +
-      `${item.receivedAt.toLocaleString('uz-UZ')}\n  <code>${escapeHtml(item.rawText.slice(0, 90))}</code>`
-  );
+  for (const item of unmatched) {
+    await ctx.replyWithHTML([
+      '<b>📥 Egasi topilmagan to‘lov</b>',
+      `<b>${item.parsedAmount ? formatUzs(item.parsedAmount) : '—'}</b> — ${item.receivedAt.toLocaleString('uz-UZ')}`,
+      `<code>${escapeHtml(item.rawText.slice(0, 90))}</code>`, '',
+      item.reminderMuted ? '🔕 Takroriy eslatma o‘chirilgan.' : '🔔 Takroriy eslatma yoqilgan.',
+      '<i>Eslatmani o‘chirish to‘lovni hal qilingan deb belgilamaydi. Yozuv saqlanadi.</i>',
+    ].join('\n'), { reply_markup: { inline_keyboard: [[{
+      text: item.reminderMuted ? '🔔 Eslatmani yoqish' : '🔕 Eslatmani to‘xtatish',
+      callback_data: `inbox_${item.reminderMuted ? 'unmute' : 'mute'}_${item._id}`,
+    }]] } });
+  }
+});
 
-  await ctx.replyWithHTML(
-    [
-      `<b>📥 Egasi topilmagan to‘lovlar (${unmatched.length})</b>`,
-      '',
-      ...lines,
-      '',
-      `<i>Bu pullar bankka tushgan. Har birini tekshirib, xaridorga qo‘lda ` +
-        `balans qo‘shing yoki pulni qaytaring.</i>`,
-    ].join('\n')
-  );
+adminHandler.action(/^inbox_(mute|unmute)_([a-f0-9]{24})$/, async (ctx) => {
+  const admin = await requireAdmin(ctx);
+  if (!admin) return void ctx.answerCbQuery('Ruxsat yo‘q');
+  const muted = ctx.match[1] === 'mute';
+  try {
+    const item = await PaymentInbox.findOneAndUpdate(
+      { _id: ctx.match[2], status: 'unmatched' },
+      { $set: { reminderMuted: muted, reminderChangedBy: admin._id, reminderChangedAt: new Date() } },
+      { new: true }
+    );
+    if (!item) return void ctx.answerCbQuery('To‘lov topilmadi yoki allaqachon hal qilingan');
+    await ctx.answerCbQuery(muted ? '🔕 Shu to‘lov eslatmasi to‘xtatildi' : '🔔 Shu to‘lov eslatmasi yoqildi');
+    // Update only this row: a summary may contain other payments that must keep their controls.
+    const markup = (ctx.callbackQuery.message as any)?.reply_markup;
+    if (markup?.inline_keyboard) {
+      const inline_keyboard = markup.inline_keyboard.map((row: any[]) => row.map(button =>
+        button.callback_data === ctx.match[0] ? {
+          text: muted ? '🔔 Eslatmani qayta yoqish' : '🔕 Eslatmani to‘xtatish',
+          callback_data: `inbox_${muted ? 'unmute' : 'mute'}_${item._id}`,
+        } : button
+      ));
+      await ctx.editMessageReplyMarkup({ inline_keyboard }).catch(() => undefined);
+    }
+  } catch (error) {
+    console.error('[Admin] Could not change payment reminder');
+    await ctx.answerCbQuery('Saqlab bo‘lmadi, qayta urinib ko‘ring').catch(() => undefined);
+  }
 });
 
 // ─── Disputes ──────────────────────────────────────────────────────────────────

@@ -233,18 +233,23 @@ export async function alertUnmatchedPayments(): Promise<number> {
   const cutoff = new Date(Date.now() - 15 * 60 * 1000);
   const pending = await PaymentInbox.find({
     status: 'unmatched',
+    reminderMuted: { $ne: true },
     receivedAt: { $lt: cutoff },
   }).limit(20);
 
   if (pending.length === 0) return 0;
 
   const lines = pending
-    .map((p) => `• ${p.parsedAmount ? formatUzs(p.parsedAmount) : '—'} — ${p.receivedAt.toLocaleString('uz-UZ')}`)
+    .map((p, index) => `${index + 1}. ${p.parsedAmount ? formatUzs(p.parsedAmount) : '—'} — ${p.receivedAt.toLocaleString('uz-UZ')}`)
     .join('\n');
 
   await notificationService.notifyAdmin(
     `⚠️ <b>Egasi topilmagan to‘lovlar (${pending.length} ta)</b>\n\n${lines}\n\n` +
-      `<i>Bu pullar bankka tushgan, lekin hech qaysi buyurtmaga bog‘lanmagan.</i>`
+      `<i>Bu pullar bankka tushgan, lekin hech qaysi buyurtmaga bog‘lanmagan.</i>`,
+    pending.map((p, index) => [{
+      text: `🔕 ${index + 1}. ${p.parsedAmount ? formatUzs(p.parsedAmount) : 'To‘lov'} — eslatmani to‘xtatish`,
+      callback_data: `inbox_mute_${p._id}`,
+    }])
   );
   return pending.length;
 }
