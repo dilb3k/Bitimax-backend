@@ -6,7 +6,7 @@ const minor = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 export const billSchema = z.object({
   id: z.string().min(1), external_reference: z.string(), amount_minor: minor,
   currency: z.literal('UZS'), state: z.string(),
-  paid: z.boolean(), environment: z.string(), livemode: z.boolean(),
+  paid: z.boolean(), environment: z.string().nullable().optional(), livemode: z.boolean(),
 });
 export const paymentSchema = z.object({
   id: z.string().min(1), state: z.string(), amount_minor: minor,

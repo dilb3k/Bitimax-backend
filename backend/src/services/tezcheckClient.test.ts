@@ -37,3 +37,9 @@ test('only matching live succeeded payment funds an order; bill state alone neve
   assert.throws(() => isLivePaid(data, { ...expected, reference: 'different-order' }));
   assert.throws(() => isLivePaid({ ...data, payment: { ...data.payment!, net_minor: 1 } }, expected));
 });
+
+test('an unpaid live-provider bill may have no environment yet', () => {
+  const data = statusSchema.parse({ bill: { id: 'link_unpaid', external_reference: 'order-unpaid', amount_minor: 100000,
+    currency: 'UZS', state: 'active', paid: false, environment: null, livemode: false }, payment: null });
+  assert.equal(isLivePaid(data, { id: 'link_unpaid', reference: 'order-unpaid', amountMinor: 100000 }), false);
+});
