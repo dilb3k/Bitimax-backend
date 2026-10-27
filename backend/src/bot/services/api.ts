@@ -94,7 +94,7 @@ export class BotApiService {
    *
    * Moderation is skipped deliberately. Its job is to protect strangers browsing a catalog
    * from a fake listing; here there is no stranger — the buyer chose this seller and this
-   * account before Bitimax was involved, and all they want is the escrow in the middle.
+   * account before Bitmax was involved, and all they want is the escrow in the middle.
    */
   async createDeal(data: {
     sellerId: string;

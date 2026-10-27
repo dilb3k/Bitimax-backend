@@ -6,7 +6,7 @@
  *
  * The guard below refuses anything that is not a local MongoDB, because this wipes the
  * collections it seeds. Point MONGODB_URI at localhost first, e.g.
- *   MONGODB_URI=mongodb://127.0.0.1:27017/bitimax_local npm run seed
+ *   MONGODB_URI=mongodb://127.0.0.1:27017/bitmax_local npm run seed
  */
 import mongoose from 'mongoose';
 import { config } from '../config';
@@ -115,7 +115,7 @@ async function main() {
   if (!LOCAL_HOSTS.includes(host)) {
     throw new Error(
       `Xavfsizlik to‘sig‘i: seed faqat lokal MongoDB bilan ishlaydi (hozirgi host: "${host}"). ` +
-        'MONGODB_URI=mongodb://127.0.0.1:27017/bitimax_local qilib qayta urinib ko‘ring.'
+        'MONGODB_URI=mongodb://127.0.0.1:27017/bitmax_local qilib qayta urinib ko‘ring.'
     );
   }
 

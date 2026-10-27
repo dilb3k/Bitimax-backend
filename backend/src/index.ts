@@ -1,10 +1,11 @@
+import { tezcheckWebhook } from './routes/tezcheckWebhook';
 import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { config } from './config';
 import { connectDatabase } from './db/mongoose';
-import { startBot } from './bot';
+import { startBot, telegramWebhook } from './bot';
 import { startScheduler, stopScheduler } from './jobs/scheduler';
 import smsWebhookRoutes from './routes/smsWebhook';
 import productRoutes from './routes/products';
@@ -26,7 +27,10 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization', 'x-internal-key'],
   })
 );
+app.use(tezcheckWebhook); // Must precede JSON parsing: provider signs raw bytes.
 app.use(express.json({ limit: '100kb' }));
+
+app.post('/api/telegram/webhook', telegramWebhook);
 
 // Generous global limiter as a DoS backstop; individual routes tighten this further.
 const globalLimiter = rateLimit({
@@ -38,7 +42,7 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'bitimax-api', version: '1.0.0' });
+  res.json({ status: 'ok', service: 'bitmax-api', version: '1.0.0' });
 });
 
 app.use('/api', smsWebhookRoutes);
@@ -65,7 +69,7 @@ async function start() {
   await connectDatabase();
 
   app.listen(config.port, () => {
-    console.log(`[Server] Bitimax API running on port ${config.port}`);
+    console.log(`[Server] Bitmax API running on port ${config.port}`);
     console.log(`[Server] SMS Webhook: POST /api/sms-webhook`);
     console.log(`[Server] Products API: GET /api/products`);
     console.log(`[Server] Web auth: POST /api/auth/start · GET /api/auth/poll`);

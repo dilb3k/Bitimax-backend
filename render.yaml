@@ -1,18 +1,16 @@
-# Render Blueprint for the Bitimax backend.
+# Render Blueprint for the Bitmax backend.
 #
 # Import in the Render dashboard: New → Blueprint → pick this repository.
 #
-# The backend is ONE long-running process that holds the Express API, the Telegraf bot
-# (long polling) and the scheduler. That rules out Render's free instance type: free
-# services are spun down after ~15 minutes of inactivity, and a spun-down bot stops
-# answering, stops expiring payment windows, and stops releasing escrow on time. The
-# `starter` plan below keeps it always on.
+# API, Telegram webhook bot and scheduler share one process.
+# Free plan selected by the owner. Incoming Telegram webhooks can wake the service;
+# scheduled payment/escrow work is delayed while Render sleeps.
 
 services:
   - type: web
-    name: bitimax-backend
+    name: bitmax-backend
     runtime: docker
-    plan: starter # never `free` — see the note above
+    plan: free # owner-selected; background jobs pause during sleep
     region: frankfurt # closest Render region to Uzbekistan
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend

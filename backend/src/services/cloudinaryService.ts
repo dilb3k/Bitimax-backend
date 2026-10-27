@@ -50,7 +50,7 @@ export async function uploadTelegramPhoto(telegram: any, fileId: string): Promis
   const timestamp = Math.floor(Date.now() / 1000);
   // Deal images sit in their own folder so they're easy to find/purge separately from anything
   // else the account might one day upload into the same Cloudinary account.
-  const paramsToSign = { folder: 'bitimax/products', timestamp };
+  const paramsToSign = { folder: 'bitmax/products', timestamp };
   const signature = signParams(paramsToSign);
 
   const form = new FormData();
@@ -113,7 +113,7 @@ export function detectImageType(bytes: Buffer): 'jpg' | 'png' | 'webp' | null {
  * payload, whereas here every byte that reaches Cloudinary has been type-checked and
  * size-capped by code we control.
  */
-export async function uploadImageBuffer(bytes: Buffer, folder = 'bitimax/products'): Promise<string> {
+export async function uploadImageBuffer(bytes: Buffer, folder = 'bitmax/products'): Promise<string> {
   if (!config.cloudinaryCloudName || !config.cloudinaryApiKey || !config.cloudinaryApiSecret) {
     throw new ImageUploadError('Rasm yuklash sozlanmagan — admin bilan bog‘laning');
   }

@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'Bitimax — pulingiz siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi';
+export const alt = 'Bitmax — pulingiz siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -41,7 +41,7 @@ export default function OpengraphImage() {
           <img src={LOGO} width={72} height={85} alt="" />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ color: '#E2E8F0', fontSize: 40, fontWeight: 800, letterSpacing: -1 }}>
-              Bitimax
+              Bitmax
             </span>
             <span style={{ color: '#64748B', fontSize: 20 }}>kafil bilan savdo</span>
           </div>

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitimax.uz';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitmax.uz';
 
 /** Refreshed hourly — new listings should be findable without a redeploy. */
 export const revalidate = 3600;

@@ -78,6 +78,18 @@ export function PaymentPanel({ transactionId }: { transactionId: string }) {
     );
   }
 
+  if (status.paymentProvider === 'tezcheck') {
+    return <div className="surface space-y-4 p-6">
+      <h2 className="text-xl font-bold text-ink">TezCheck orqali to‘lov</h2>
+      <p>{status.title}</p>
+      <p className="text-2xl font-bold">{status.paymentAmount?.toLocaleString('uz-UZ')} so‘m</p>
+      {status.paymentReview ? <Notice tone="warn">To‘lov tekshirilmoqda. Qayta pul o‘tkazmang, qo‘llab-quvvatlash bilan bog‘laning.</Notice>
+        : status.paymentUrl ? <a href={status.paymentUrl} className="btn-accent">💳 To‘lash</a>
+        : <p>To‘lov havolasi tayyorlanmoqda…</p>}
+      <p className="text-sm text-muted">To‘lov tasdiqlangach sahifa avtomatik yangilanadi va bot xabar beradi.</p>
+    </div>;
+  }
+
   return (
     <div className="space-y-4">
       <div className="surface p-5 sm:p-6">

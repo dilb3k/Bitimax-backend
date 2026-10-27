@@ -29,6 +29,7 @@ function getKey(): Buffer {
     // Accept a passphrase too, but stretch it — a raw utf8 passphrase would otherwise be
     // a low-entropy key. scrypt with a fixed salt is deterministic, which is what we need
     // since the same key must be derivable on every process start.
+    // Keep the original salt stable so existing encrypted credentials remain readable.
     cachedKey = crypto.scryptSync(raw, 'bitimax:credential:v1', 32);
   }
   return cachedKey;

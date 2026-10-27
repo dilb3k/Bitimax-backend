@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+import type { RequestHandler } from 'express';
 import { Telegraf, Scenes, session } from 'telegraf';
 import { config } from '../config';
 import { connectDatabase } from '../db/mongoose';
@@ -17,6 +19,12 @@ import { escapeHtml, formatUzs } from '../utils/helpers';
  * embedded in the same process as the HTTP API (see src/index.ts), sharing one Mongo
  * connection instead of opening two.
  */
+let webhookHandler: RequestHandler | undefined;
+export const telegramWebhook: RequestHandler = (req, res, next) => {
+  if (!webhookHandler) { res.status(503).json({ error: 'Bot starting' }); return; }
+  return webhookHandler(req, res, next);
+};
+
 export async function startBot(): Promise<void> {
   if (!config.botToken || config.botToken === 'YOUR_BOT_TOKEN_HERE') {
     // In production the bot *is* the product: refuse to boot half a platform. Locally, a
@@ -143,6 +151,15 @@ export async function startBot(): Promise<void> {
     console.error(`[Bot] Error handling ${ctx?.updateType}:`, err);
   });
 
+  if (config.botWebhookUrl) {
+    const secret = crypto.createHmac('sha256', config.internalApiKey).update('telegram-webhook-v1').digest('hex');
+    bot.botInfo = await bot.telegram.getMe();
+    webhookHandler = bot.webhookCallback('/api/telegram/webhook', { secretToken: secret });
+    await bot.telegram.setWebhook(config.botWebhookUrl, { secret_token: secret, max_connections: 1 });
+    console.log('[Bot] Telegram webhook ready');
+    return;
+  }
+
   // In long-polling mode bot.launch() only resolves once the bot is stopped (its internal
   // loop runs until then), so awaiting it here would hang startBot() forever and, when
   // embedded in the HTTP server process, block start() from ever finishing. It is launched
@@ -178,7 +195,7 @@ async function launchWithRetry(bot: Telegraf<any>): Promise<void> {
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS && !stopping; attempt++) {
     try {
-      if (attempt === 1) console.log('[Bot] Bitimax bot starting (long polling)…');
+      if (attempt === 1) console.log('[Bot] Bitmax bot starting (long polling)…');
       // Resolves only once the bot is stopped, so reaching the next line means a clean stop.
       await bot.launch({ dropPendingUpdates: true });
       console.log('[Bot] Polling loop ended cleanly');

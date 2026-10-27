@@ -1,4 +1,4 @@
-# Bitimax backend — API + Telegram bot + scheduler in one process.
+# Bitmax backend — API + Telegram bot + scheduler in one process.
 #
 # This is a long-running stateful service (Telegraf long-polling and setInterval sweeps),
 # so it cannot run on a serverless platform. Any host that runs a container works:
@@ -28,13 +28,13 @@ ENV NODE_ENV=production
 
 # Run as a non-root user: this process holds the bot token and the credential
 # encryption key, so a container escape should not also mean root.
-RUN addgroup -S bitimax && adduser -S bitimax -G bitimax
+RUN addgroup -S bitmax && adduser -S bitmax -G bitmax
 
-COPY --from=build --chown=bitimax:bitimax /app/node_modules ./node_modules
-COPY --from=build --chown=bitimax:bitimax /app/dist ./dist
-COPY --chown=bitimax:bitimax package.json ./
+COPY --from=build --chown=bitmax:bitmax /app/node_modules ./node_modules
+COPY --from=build --chown=bitmax:bitmax /app/dist ./dist
+COPY --chown=bitmax:bitmax package.json ./
 
-USER bitimax
+USER bitmax
 
 EXPOSE 3001
 

@@ -159,6 +159,9 @@ router.post('/purchases', writeLimiter, async (req: Request, res: Response) => {
 
     res.json({
       transactionId: String(transaction._id),
+      paymentProvider: transaction.paymentProvider,
+      paymentUrl: transaction.paymentReview ? null : transaction.paymentUrl || null,
+      paymentAmount: transaction.basePrice,
       product: { id: String(product._id), title: product.title, price: product.price },
       uniqueAmount,
       expiresAt,
@@ -305,12 +308,16 @@ router.get('/transactions/:id/status', validateObjectId(), async (req: Request, 
     // The destination card is re-served while (and only while) the transfer is still owed, so
     // a buyer who closed the tab can finish paying without opening a second order.
     const card =
-      transaction.status === 'pending_payment'
+      transaction.status === 'pending_payment' && transaction.paymentProvider !== 'tezcheck'
         ? config.paymentCards.find((c) => c.id === transaction.cardId) || config.paymentCards[0]
         : null;
 
     res.json({
       status: transaction.status,
+      paymentProvider: transaction.paymentProvider,
+      paymentUrl: transaction.status === 'pending_payment' && !transaction.paymentReview ? transaction.paymentUrl || null : null,
+      paymentAmount: transaction.basePrice,
+      paymentReview: Boolean(transaction.paymentReview),
       title: (transaction.productId as any)?.title || 'Mahsulot',
       uniqueAmount: transaction.uniqueAmount,
       expireAt: transaction.expireAt,
@@ -677,7 +684,7 @@ router.post('/deals', writeLimiter, async (req: Request, res: Response) => {
       dealCode: formatDealCode(deal.dealCode!),
       expiresAt: deal.dealExpiresAt,
       shareText:
-        `🤝 Bitimax kafil bitimi\n${deal.title}\nSumma: ${formatUzs(deal.price)}\n` +
+        `🤝 Bitmax kafil bitimi\n${deal.title}\nSumma: ${formatUzs(deal.price)}\n` +
         `Kod: ${formatDealCode(deal.dealCode!)}\n\n${config.siteUrl}/kod`,
     });
   } catch (error: any) {

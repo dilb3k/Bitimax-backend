@@ -60,16 +60,16 @@ startHandler.start(async (ctx) => {
 
   await ctx.replyWithHTML(
     [
-      `<b>🔰 Bitimax — kafil bilan savdo</b>`,
+      `<b>🔰 Bitmax — kafil bilan savdo</b>`,
       '',
-      `Bitimax ikki ishni qiladi:`,
+      `Bitmax ikki ishni qiladi:`,
       '',
       `<b>1️⃣ 🛍 Akkaunt bozori</b>`,
       `Instagram, Telegram, TikTok, o‘yin akkauntlari — katalogdan sotib oling yoki`,
       `o‘zingiznikini sotuvga qo‘ying.`,
       '',
       `<b>2️⃣ 🤝 Kafil bitim (escrow)</b>`,
-      `Xaridor va sotuvchi allaqachon kelishgan bo‘lsa, Bitimax o‘rtada turadi.`,
+      `Xaridor va sotuvchi allaqachon kelishgan bo‘lsa, Bitmax o‘rtada turadi.`,
       `Sotuvchi kod oladi, xaridor kodni kiritadi — pul kafilda saqlanadi.`,
       '',
       `<b>🛡 Ikkalasida ham himoya bir xil:</b>`,
@@ -90,7 +90,7 @@ function helpText(): string {
       `<b>❓ Yordam</b>`,
       '',
       `<b>🤝 Kafil bitim — kelishilgan savdo</b>`,
-      `Xaridor va sotuvchi bir-birini topgan bo‘lsa, Bitimax faqat kafil bo‘ladi:`,
+      `Xaridor va sotuvchi bir-birini topgan bo‘lsa, Bitmax faqat kafil bo‘ladi:`,
       `1. Sotuvchi: “🤝 Kafil bitim” → “Men sotyapman” → 4 ta savol`,
       `2. Sotuvchi <b>kod</b> oladi va xaridorga yuboradi`,
       `3. Xaridor: “🤝 Kafil bitim” → “Men sotib olyapman” → kodni kiritadi`,

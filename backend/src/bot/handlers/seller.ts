@@ -142,7 +142,7 @@ sellerHandler.hears(['🤝 Kafil bitim (escrow)', '🤝 Kafil bitim'], async (ct
     [
       `<b>🤝 Kafil bitim</b>`,
       '',
-      `Xaridor va sotuvchi allaqachon kelishgan bo‘lsa, Bitimax o‘rtada turadi:`,
+      `Xaridor va sotuvchi allaqachon kelishgan bo‘lsa, Bitmax o‘rtada turadi:`,
       `pul kafilda saqlanadi, xaridor akkauntni tekshiradi, keyin pul sotuvchiga o‘tadi.`,
       '',
       `• Katalogda ko‘rinmaydi — faqat kod bilan ochiladi`,
@@ -443,7 +443,7 @@ export function createDealWizard() {
                 {
                   text: '📤 Xaridorga yuborish',
                   // Prefilled forward: the seller picks the chat and Telegram sends the text.
-                  switch_inline_query: `\n\n🤝 Bitimax kafil bitimi\n${deal.title}\nSumma: ${formatUzs(deal.price)}\nKod: ${code}\n\nhttps://t.me/${config.botUsername}`,
+                  switch_inline_query: `\n\n🤝 Bitmax kafil bitimi\n${deal.title}\nSumma: ${formatUzs(deal.price)}\nKod: ${code}\n\nhttps://t.me/${config.botUsername}`,
                 },
               ],
               [{ text: '❌ Bitimni bekor qilish', callback_data: `deal_cancel_${deal._id}` }],

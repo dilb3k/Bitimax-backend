@@ -1,7 +1,7 @@
 import Image from 'next/image';
 
 /**
- * The Bitimax mark: a B split into a cyan half and a slate half, shaking hands across the
+ * The Bitmax mark: a B split into a cyan half and a slate half, shaking hands across the
  * middle. Buyer and seller, the platform holding the join — the same idea the product is.
  *
  * Served as a transparent PNG rather than inline SVG because the artwork carries soft gradients
@@ -34,7 +34,7 @@ export function Logo({ className = '', priority = false }: { className?: string;
   return (
     <span className={`flex items-center gap-2.5 ${className}`}>
       <LogoMark size={30} priority={priority} />
-      <span className="font-display text-xl font-extrabold tracking-tight text-ink">Bitimax</span>
+      <span className="font-display text-xl font-extrabold tracking-tight text-ink">Bitmax</span>
     </span>
   );
 }

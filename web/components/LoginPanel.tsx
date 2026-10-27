@@ -156,7 +156,7 @@ export function LoginPanel() {
       </ol>
 
       <p className="mt-6 border-t border-line pt-4 text-xs leading-relaxed text-faint">
-        Bitimax parol so‘ramaydi. Kirish faqat botdagi tasdiq orqali amalga oshadi — shuning uchun
+        Bitmax parol so‘ramaydi. Kirish faqat botdagi tasdiq orqali amalga oshadi — shuning uchun
         parolingiz o‘g‘irlanishi ham mumkin emas.
       </p>
     </div>

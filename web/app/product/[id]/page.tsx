@@ -33,9 +33,9 @@ async function getProduct(id: string): Promise<Product | null> {
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const product = await getProduct(params.id);
-  if (!product) return { title: 'Mahsulot topilmadi — Bitimax' };
+  if (!product) return { title: 'Mahsulot topilmadi — Bitmax' };
   return {
-    title: `${product.title} — Bitimax`,
+    title: `${product.title} — Bitmax`,
     description: product.description.slice(0, 160),
   };
 }

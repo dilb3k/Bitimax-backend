@@ -86,9 +86,10 @@ function parsePaymentCards(): PaymentCard[] {
 export const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
   isProd,
-  mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/bitimax',
+  mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/bitmax',
   port: parseInt(process.env.PORT || '3001', 10),
   botToken: process.env.BOT_TOKEN || '',
+  botWebhookUrl: process.env.BOT_WEBHOOK_URL || (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/api/telegram/webhook` : ''),
   adminChatId: process.env.ADMIN_CHAT_ID || '',
   // Extra admins beyond the owner — comma separated telegram ids.
   extraAdminIds: (process.env.ADMIN_IDS || '')
@@ -118,6 +119,14 @@ export const config = {
   platformCommission: num('PLATFORM_COMMISSION', 7),
   refundTiers: parseRefundTiers(),
   paymentCards: parsePaymentCards(),
+  paymentProvider: process.env.PAYMENT_PROVIDER || 'sms',
+  tezcheck: {
+    apiKey: process.env.TEZCHECK_API_KEY || '',
+    cashDeskCode: process.env.TEZCHECK_CASH_DESK_CODE || '',
+    webhookSecret: process.env.TEZCHECK_WEBHOOK_SECRET || '',
+    baseUrl: process.env.TEZCHECK_BASE_URL || 'https://api.tezcheck.uz/api/merchant/v1',
+    providerCodes: (process.env.TEZCHECK_PROVIDER_CODES || 'click,payme').split(',').map(s => s.trim()).filter(Boolean),
+  },
 
   // How long a buyer has to transfer the unique amount before the reservation lapses.
   paymentWindowMinutes: num('PAYMENT_WINDOW_MINUTES', 10),
@@ -148,9 +157,9 @@ export const config = {
   // Hard cap on how many photos a single product/deal can carry.
   maxProductImages: num('MAX_PRODUCT_IMAGES', 8),
 
-  siteUrl: process.env.SITE_URL || 'https://bitimax.uz',
-  botUsername: process.env.BOT_USERNAME || 'bitimax_bot',
-  supportUsername: process.env.SUPPORT_USERNAME || 'bitimax_admin',
+  siteUrl: process.env.SITE_URL || 'https://bitmax.uz',
+  botUsername: process.env.BOT_USERNAME || 'bitmax_bot',
+  supportUsername: process.env.SUPPORT_USERNAME || 'bitmax_admin',
 
   // Comma-separated list of origins allowed to call the public API from a browser.
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:3000')
@@ -202,4 +211,9 @@ export function safeEquals(a: string, b: string): boolean {
     return false;
   }
   return crypto.timingSafeEqual(bufA, bufB);
+}
+
+if (!['sms', 'tezcheck'].includes(config.paymentProvider)) throw new Error('Invalid PAYMENT_PROVIDER');
+if (config.paymentProvider === 'tezcheck' && (!config.tezcheck.apiKey || config.tezcheck.apiKey.includes('*') || !config.tezcheck.cashDeskCode || !config.tezcheck.webhookSecret)) {
+  throw new Error('TezCheck requires full API key, cash desk code and webhook secret');
 }

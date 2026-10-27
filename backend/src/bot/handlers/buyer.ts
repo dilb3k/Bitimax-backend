@@ -102,7 +102,7 @@ export function createCodeWizard() {
           `Summa: <b>${formatUzs(deal.price)}</b>`,
           `Sotuvchi: @${escapeHtml(seller?.username || 'noma’lum')} (${rating})`,
           '',
-          `<b>🛡 Bitimax kafil bo‘ladi:</b>`,
+          `<b>🛡 Bitmax kafil bo‘ladi:</b>`,
           `• Pulingiz sotuvchiga darhol o‘tmaydi`,
           `• Avval akkauntni tekshirasiz`,
           `• Muammo bo‘lsa — pul qaytariladi`,
@@ -210,10 +210,26 @@ buyerHandler.action(/^buy_(.+)$/, async (ctx) => {
       return;
     }
 
-    const { product, uniqueAmount, card, expiresAt } = await botApi.initiatePurchase(
+    await ctx.answerCbQuery('To‘lov tayyorlanmoqda…');
+    const { transaction, product, uniqueAmount, card, expiresAt, paymentProvider, paymentUrl } = await botApi.initiatePurchase(
       productId,
       user._id.toString()
     );
+
+    if (paymentProvider === 'tezcheck') {
+      await ctx.editMessageText([
+        '<b>💳 TezCheck orqali to‘lov</b>', '',
+        `<b>Mahsulot:</b> ${escapeHtml(product.title)}`,
+        `<b>Summa:</b> ${formatUzs(product.price)}`, '',
+        transaction.paymentReview ? 'To‘lov qo‘lda tekshirilmoqda. Qo‘llab-quvvatlash bilan bog‘laning.' : paymentUrl ? 'Quyidagi tugma orqali to‘lang. To‘lov tasdiqlangach bot xabar beradi.'
+          : 'To‘lov havolasi tayyorlanmoqda. Birozdan keyin “Buyurtmalarim”ni oching.',
+        'To‘lov tekshirilayotganida qayta pul o‘tkazmang.',
+      ].join('\n'), { parse_mode: 'HTML', reply_markup: { inline_keyboard: [
+        ...(paymentUrl ? [[{ text: '💳 To‘lash', url: paymentUrl }]] : []),
+        [{ text: '🔄 Holatni tekshirish', callback_data: `payment_status_${transaction._id}` }],
+      ] } });
+      return;
+    }
 
     // The full number, not the masked one: this is the platform's own receiving card and the
     // buyer cannot make the transfer without it. Masking it here (as an earlier version did)
@@ -245,9 +261,25 @@ buyerHandler.action(/^buy_(.+)$/, async (ctx) => {
     ].join('\n');
 
     await ctx.editMessageText(paymentMessage, { parse_mode: 'HTML' });
-    await ctx.answerCbQuery('To‘lov yaratildi');
   } catch (error: any) {
-    await ctx.answerCbQuery(describeError(error));
+    await ctx.reply(describeError(error));
+  }
+});
+
+buyerHandler.action(/^payment_status_([a-f0-9]{24})$/, async (ctx) => {
+  const user = await User.findOne({ telegramId: ctx.from!.id, isBlocked: { $ne: true } });
+  if (!user) { await ctx.answerCbQuery('Ruxsat yo‘q'); return; }
+  const t = await Transaction.findOne({ _id: ctx.match[1], buyerId: user._id });
+  if (!t) { await ctx.answerCbQuery('Buyurtma topilmadi'); return; }
+  if (t.status === 'paid' || t.status === 'completed') {
+    const hold = await EscrowHold.findOne({ transactionId: t._id });
+    await ctx.answerCbQuery('To‘lov tasdiqlangan');
+    if (hold) await ctx.replyWithHTML('✅ To‘lov tasdiqlandi. Buyurtmangiz:', revealButton(String(hold._id)));
+  } else {
+    await ctx.answerCbQuery(t.paymentReview ? 'To‘lov qo‘lda tekshirilmoqda' : t.status === 'pending_payment' ? 'To‘lov kutilmoqda — avtomatik tekshiriladi' : 'Buyurtma yopilgan');
+    if (t.status === 'pending_payment' && t.paymentUrl && !t.paymentReview) {
+      await ctx.replyWithHTML('💳 Buyurtmangiz uchun to‘lov havolasi:', { reply_markup: { inline_keyboard: [[{ text: 'To‘lash', url: t.paymentUrl }]] } });
+    }
   }
 });
 
@@ -450,12 +482,16 @@ buyerHandler.hears(['📦 Mening buyurtmalarim', '📦 Buyurtmalarim'], async (c
       [
         `${label} <b>${escapeHtml(product?.title || 'Mahsulot')}</b>`,
         '',
-        `💰 ${formatUzs(t.uniqueAmount)}`,
+        `💰 ${formatUzs(t.paymentProvider === 'tezcheck' ? t.basePrice : t.uniqueAmount)}`,
         `🕐 ${new Date(t.createdAt).toLocaleString('uz-UZ')}`,
         t.status === 'expired'
           ? `<i>Vaqt tugagani uchun bandlik bekor qilindi. Pulingiz o‘tkazilmagan bo‘lsa xavfsiz.</i>`
           : `<i>Ko‘rsatilgan summani o‘tkazing — tasdiqlangach xabar keladi.</i>`,
-      ].join('\n')
+      ].join('\n'),
+      t.paymentProvider === 'tezcheck' && t.status === 'pending_payment' ? { reply_markup: { inline_keyboard: [
+        ...(t.paymentUrl && !t.paymentReview ? [[{ text: '💳 To‘lash', url: t.paymentUrl }]] : []),
+        [{ text: '🔄 Holatni tekshirish', callback_data: `payment_status_${t._id}` }],
+      ] } } : undefined
     );
   }
 });

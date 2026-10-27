@@ -147,7 +147,7 @@ async function normalizeProductStatuses() {
 }
 
 async function main() {
-  console.log('\n▶ Bitimax v1 → v2 migration\n');
+  console.log('\n▶ Bitmax v1 → v2 migration\n');
   await connectDatabase();
 
   await dropTransactionTtlIndex();

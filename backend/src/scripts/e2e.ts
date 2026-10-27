@@ -639,7 +639,7 @@ async function main() {
     );
   }
 
-  console.log(`\n\x1b[1mBitimax — to‘liq e2e sinov\x1b[0m  (baza: ${dbName})`);
+  console.log(`\n\x1b[1mBitmax — to‘liq e2e sinov\x1b[0m  (baza: ${dbName})`);
   await connectDatabase();
 
   // Fresh start every run so results are deterministic. Listed one by one rather than in an

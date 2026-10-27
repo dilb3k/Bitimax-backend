@@ -1,4 +1,4 @@
-# Bitimax — Texnik Topshiriq v2.0
+# Bitmax — Texnik Topshiriq v2.0
 
 **P2P Escrow (kafil) va raqamli mahsulotlar bozori**
 
@@ -563,7 +563,7 @@ Bitim yopilganidan `CREDENTIAL_RETENTION_DAYS` (default 30) kun keyin ma'lumotla
 
 ```
 ┌──────────────────────────────────────────┐
-│  bitimax-backend  (bitta process)        │
+│  bitmax-backend  (bitta process)        │
 │                                          │
 │  Express API  ──┐                        │
 │  Telegraf bot ──┼── bitta Mongo ulanish  │
@@ -669,7 +669,7 @@ Bloklash tugmasi endi **haqiqatan ishlaydi** va e'lonlarni ham arxivlaydi — ak
 v1.0 TZ matnida **MongoDB parolining ochiq nusxasi** bor edi:
 
 ```
-mongodb+srv://dilbekshermatov_db_user:CJJcux5O6RxpSQvL@bitimax.ueqfgj1.mongodb.net/...
+mongodb+srv://<username>:<password>@<cluster>/bitimax
 ```
 
 Bu parol chat, hujjat va (ehtimol) git tarixidan o'tgan. **Bajarilishi kerak:**
@@ -835,4 +835,4 @@ v1.0 TZ to'g'ri mahsulotni tasvirlaydi. v2.0 uni **ishlaydigan** qiladi:
 
 ---
 
-*Bitimax TZ v2.0 · 2026-08-08*
+*Bitmax TZ v2.0 · 2026-08-08*

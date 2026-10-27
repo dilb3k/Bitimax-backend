@@ -130,6 +130,6 @@ export async function fetchStats(): Promise<PlatformStats | null> {
 }
 
 export function botLink(productId?: string): string {
-  const username = process.env.NEXT_PUBLIC_BOT_USERNAME || 'bitimax_bot';
+  const username = process.env.NEXT_PUBLIC_BOT_USERNAME || 'bitmax_bot';
   return productId ? `https://t.me/${username}?start=buy_${productId}` : `https://t.me/${username}`;
 }

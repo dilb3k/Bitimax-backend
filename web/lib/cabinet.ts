@@ -228,6 +228,10 @@ export const api = {
   buy: (productId: string) => post<PaymentInstructions>('purchases', { productId }),
   transactionStatus: (id: string) =>
     call<{
+      paymentProvider?: 'sms' | 'tezcheck';
+      paymentUrl?: string | null;
+      paymentAmount?: number;
+      paymentReview?: boolean;
       status: 'pending_payment' | 'paid' | 'expired' | 'cancelled' | 'refunded' | 'completed';
       title: string;
       uniqueAmount: number;

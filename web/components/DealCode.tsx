@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 /**
- * Explains the escrow-only path: two people who already agreed a price elsewhere use Bitimax
+ * Explains the escrow-only path: two people who already agreed a price elsewhere use Bitmax
  * purely as the guarantor. This is the larger of the two use cases in practice — most Telegram
  * account trades start in a private chat, not in a catalog — so it gets its own section rather
  * than a footnote under the marketplace.
@@ -17,7 +17,7 @@ export function DealCode() {
             </p>
 
             <h2 className="text-2xl font-bold leading-tight text-ink sm:text-4xl">
-              Kelishib bo‘lgan bo‘lsangiz — Bitimax faqat kafil bo‘ladi.
+              Kelishib bo‘lgan bo‘lsangiz — Bitmax faqat kafil bo‘ladi.
             </h2>
 
             <p className="mt-4 max-w-prose text-base leading-relaxed text-muted">

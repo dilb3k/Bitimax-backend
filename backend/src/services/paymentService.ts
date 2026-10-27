@@ -20,6 +20,7 @@ import {
 } from './refundEngine';
 import { ledgerService, accounts } from './ledgerService';
 import { config } from '../config';
+import { toMinor } from './tezcheckClient';
 import { RefundQuote } from '../types';
 
 export class AlreadyProcessedError extends Error {
@@ -62,6 +63,15 @@ export class PaymentService {
    * conditional update, so exactly one caller can win it.
    */
   async createPaymentTransaction(productId: string, buyerId: string) {
+    const existing = await Transaction.findOne({ productId, buyerId, status: 'pending_payment', paymentProvider: 'tezcheck' });
+    if (existing) {
+      const product = await Product.findById(productId);
+      if (!product) throw new ProductUnavailableError();
+      const { ensureTezcheckBill } = await import('./tezcheckPayments');
+      await ensureTezcheckBill(existing).catch(() => undefined);
+      return { transaction: existing, product, uniqueAmount: existing.basePrice,
+        paymentUrl: existing.paymentReview ? undefined : existing.paymentUrl, paymentProvider: 'tezcheck', expiresAt: existing.expireAt, card: null };
+    }
     const expireAt = new Date(Date.now() + config.paymentWindowMinutes * 60 * 1000);
 
     const product = await Product.findOneAndUpdate(
@@ -94,31 +104,47 @@ export class PaymentService {
     for (let attempt = 0; attempt < 10; attempt++) {
       const uniqueAmount = generateUniqueAmount(product.price);
       try {
+        const transactionId = new mongoose.Types.ObjectId();
         const transaction = await Transaction.create({
+          _id: transactionId,
+          tezcheckRequest: config.paymentProvider === 'tezcheck' ? JSON.stringify({
+            amount_minor: toMinor(product.price), title: `Buyurtma #${transactionId}`,
+            external_reference: String(transactionId), allowed_provider_codes: config.tezcheck.providerCodes,
+          }) : undefined,
           productId: product._id,
           buyerId,
           sellerId: product.sellerId,
           basePrice: product.price,
           expectedAmount: product.price,
           uniqueAmount,
-          cardId: card?.id,
+          cardId: config.paymentProvider === 'sms' ? card?.id : undefined,
+          paymentProvider: config.paymentProvider,
           status: 'pending_payment',
           expireAt,
         });
 
+        if (config.paymentProvider === 'tezcheck') {
+          const { ensureTezcheckBill } = await import('./tezcheckPayments');
+          // A timeout may mean a bill exists remotely. Keep this order reserved for recovery.
+          await ensureTezcheckBill(transaction).catch(() => undefined);
+        }
         return {
           transaction,
+          paymentProvider: transaction.paymentProvider,
+          paymentUrl: transaction.paymentUrl,
           product,
-          uniqueAmount,
+          uniqueAmount: transaction.paymentProvider === 'tezcheck' ? transaction.basePrice : uniqueAmount,
           expiresAt: expireAt,
-          card: card
+          card: transaction.paymentProvider !== 'tezcheck' && card
             ? { masked: maskCard(card.number), raw: card.number, holder: card.holder, bank: card.bank }
             : null,
         };
       } catch (err: any) {
         // E11000 = collided with another still-pending transaction's uniqueAmount; retry.
         if (err?.code === 11000) continue;
-        await this.releaseReservation(String(product._id));
+        if (!await Transaction.exists({ productId: product._id, buyerId, status: 'pending_payment', paymentProvider: 'tezcheck' })) {
+          await this.releaseReservation(String(product._id));
+        }
         throw err;
       }
     }
@@ -126,6 +152,65 @@ export class PaymentService {
     // Could not find a free amount — don't strand the listing in `reserved`.
     await this.releaseReservation(String(product._id));
     throw new Error('Could not allocate a unique payment amount, please try again');
+  }
+
+  /** Shared only after an authenticated payment has been atomically claimed. */
+  async fundEscrow(transaction: any, session: mongoose.ClientSession, meta: Record<string, unknown>) {
+    const boughtAt = new Date();
+    const { commission, sellerPayout } = calculateSellerPayout(transaction.basePrice);
+
+    await Product.findByIdAndUpdate(
+      transaction.productId,
+      {
+        $set: { status: 'sold', buyerId: transaction.buyerId, soldAt: boughtAt },
+        $unset: { reservedBy: '', reservedUntil: '' },
+      },
+      { session }
+    );
+
+    const [hold] = await EscrowHold.create(
+      [
+        {
+          transactionId: transaction._id,
+          buyerId: transaction.buyerId,
+          sellerId: transaction.sellerId,
+          productId: transaction.productId,
+          amount: transaction.basePrice,
+          commission,
+          sellerPayout,
+          status: 'holding',
+          boughtAt,
+          // Recomputed from the reveal moment as soon as the buyer opens the credentials.
+          autoReleaseAt: new Date(boughtAt.getTime() + config.unrevealedGraceHours * 3600_000),
+          refundDeadlineAt: refundDeadlineFrom(boughtAt),
+        },
+      ],
+      { session }
+    );
+
+    // Money enters the system from the bank and lands in this order's escrow account.
+    await ledgerService.post(
+      {
+        key: `payment:${transaction._id}`,
+        type: 'payment_received',
+        postings: [
+          { account: accounts.externalBank, amount: -transaction.basePrice },
+          { account: accounts.escrow(String(hold._id)), amount: transaction.basePrice },
+        ],
+        refType: 'Transaction',
+        refId: transaction._id as mongoose.Types.ObjectId,
+        meta,
+      },
+      session
+    );
+
+    await User.findByIdAndUpdate(
+      transaction.buyerId,
+      { $inc: { totalSpent: transaction.basePrice, 'buyerStats.purchased': 1 } },
+      { session }
+    );
+
+    return hold;
   }
 
   /** Returns a reserved-but-unpaid product to the catalog. */
@@ -196,6 +281,7 @@ export class PaymentService {
         // same amount can never both succeed — the second finds no pending row left to claim.
         const transaction = await Transaction.findOneAndUpdate(
           {
+            paymentProvider: { $ne: 'tezcheck' },
             uniqueAmount: roundedAmount,
             status: 'pending_payment',
             expireAt: { $gt: new Date() },
@@ -213,59 +299,7 @@ export class PaymentService {
 
         if (!transaction) return;
 
-        const boughtAt = new Date();
-        const { commission, sellerPayout } = calculateSellerPayout(transaction.basePrice);
-
-        await Product.findByIdAndUpdate(
-          transaction.productId,
-          {
-            $set: { status: 'sold', buyerId: transaction.buyerId, soldAt: boughtAt },
-            $unset: { reservedBy: '', reservedUntil: '' },
-          },
-          { session }
-        );
-
-        const [hold] = await EscrowHold.create(
-          [
-            {
-              transactionId: transaction._id,
-              buyerId: transaction.buyerId,
-              sellerId: transaction.sellerId,
-              productId: transaction.productId,
-              amount: transaction.basePrice,
-              commission,
-              sellerPayout,
-              status: 'holding',
-              boughtAt,
-              // Recomputed from the reveal moment as soon as the buyer opens the credentials.
-              autoReleaseAt: new Date(boughtAt.getTime() + config.unrevealedGraceHours * 3600_000),
-              refundDeadlineAt: refundDeadlineFrom(boughtAt),
-            },
-          ],
-          { session }
-        );
-
-        // Money enters the system from the bank and lands in this order's escrow account.
-        await ledgerService.post(
-          {
-            key: `payment:${transaction._id}`,
-            type: 'payment_received',
-            postings: [
-              { account: accounts.externalBank, amount: -transaction.basePrice },
-              { account: accounts.escrow(String(hold._id)), amount: transaction.basePrice },
-            ],
-            refType: 'Transaction',
-            refId: transaction._id as mongoose.Types.ObjectId,
-            meta: { uniqueAmount: roundedAmount, sender },
-          },
-          session
-        );
-
-        await User.findByIdAndUpdate(
-          transaction.buyerId,
-          { $inc: { totalSpent: transaction.basePrice, 'buyerStats.purchased': 1 } },
-          { session }
-        );
+        const hold = await this.fundEscrow(transaction, session, { uniqueAmount: roundedAmount, sender });
 
         claimedTransaction = transaction;
         escrowId = String(hold._id);

@@ -1,4 +1,4 @@
-# Bitimax — Deploy qo'llanmasi
+# Bitmax — Deploy qo'llanmasi
 
 Arxitektura ikki qismdan iborat va ular **alohida** joylashtiriladi:
 
@@ -60,7 +60,7 @@ npm run migrate
 Kutilayotgan natija:
 
 ```
-▶ Bitimax v1 → v2 migration
+▶ Bitmax v1 → v2 migration
   ✓ Dropped TTL index "expireAt_1" — expired transactions are now retained
   ✓ Encrypted credentials for N product(s)
   ✓ Backfilled deadlines for N escrow hold(s)
@@ -75,8 +75,8 @@ Oxirgi qator `⚠ N account(s) still drift` bo'lsa — **deploy qilmang**, avval
 ## 3. Backend → Render
 
 1. [dashboard.render.com](https://dashboard.render.com) → **New** → **Blueprint**
-2. `dilb3k/Bitimax-backend` repozitoriyasini tanlang
-3. Render `render.yaml` ni topadi va `bitimax-backend` servisini taklif qiladi
+2. `dilb3k/Bitmax-backend` repozitoriyasini tanlang
+3. Render `render.yaml` ni topadi va `bitmax-backend` servisini taklif qiladi
 4. `sync: false` belgilangan har bir o'zgaruvchi uchun qiymat so'raydi:
 
 | O'zgaruvchi | Qiymat |
@@ -88,26 +88,26 @@ Oxirgi qator `⚠ N account(s) still drift` bo'lsa — **deploy qilmang**, avval
 | `INTERNAL_API_KEY` | 1-qadamda generatsiya qilingan |
 | `ENCRYPTION_KEY` | 1-qadamda generatsiya qilingan (migratsiyada ishlatilgani bilan **bir xil**) |
 | `PAYMENT_CARDS` | `[{"id":"c1","number":"8600...","holder":"ISM F","bank":"Kapitalbank","active":true}]` |
-| `SITE_URL` | Vercel domeni, masalan `https://bitimax.vercel.app` |
+| `SITE_URL` | Vercel domeni, masalan `https://bitmax.vercel.app` |
 | `CORS_ORIGINS` | Xuddi shu domen |
-| `BOT_USERNAME` | `bitimax_bot` |
-| `SUPPORT_USERNAME` | `bitimax_admin` |
+| `BOT_USERNAME` | `bitmax_bot` |
+| `SUPPORT_USERNAME` | `bitmax_admin` |
 
 5. **Apply** → Render Docker image'ni build qiladi va ishga tushiradi
 
 Tekshirish:
 
 ```bash
-curl https://bitimax-backend.onrender.com/health
-# {"status":"ok","service":"bitimax-api","version":"1.0.0"}
+curl https://bitmax-backend.onrender.com/health
+# {"status":"ok","service":"bitmax-api","version":"1.0.0"}
 ```
 
 Render logida ko'rinishi kerak:
 
 ```
 [DB] MongoDB connected successfully
-[Server] Bitimax API running on port 3001
-[Bot] Bitimax bot started (long polling)
+[Server] Bitmax API running on port 3001
+[Bot] Bitmax bot started (long polling)
 [Jobs] Scheduler started with 5 jobs
 ```
 
@@ -120,7 +120,7 @@ Web allaqachon Vercel loyihasiga ulangan (`web/.vercel/project.json`).
 ```bash
 cd web
 npx vercel env add BACKEND_URL production
-#   → https://bitimax-backend.onrender.com
+#   → https://bitmax-backend.onrender.com
 
 npx vercel --prod
 ```
@@ -129,16 +129,16 @@ Yoki Vercel dashboard → Settings → Environment Variables:
 
 | O'zgaruvchi | Qiymat |
 |---|---|
-| `BACKEND_URL` | `https://bitimax-backend.onrender.com` |
+| `BACKEND_URL` | `https://bitmax-backend.onrender.com` |
 | `NEXT_PUBLIC_SITE_URL` | Vercel domeningiz |
-| `NEXT_PUBLIC_BOT_USERNAME` | `bitimax_bot` |
+| `NEXT_PUBLIC_BOT_USERNAME` | `bitmax_bot` |
 
 ## 5. SMS-Gateway sozlash
 
 Android telefonda SMS-forwarder ilovasini o'rnating (masalan *SMS Forwarder* yoki *SMS Gateway*) va webhook sozlang:
 
 ```
-URL:    https://bitimax-backend.onrender.com/api/sms-webhook
+URL:    https://bitmax-backend.onrender.com/api/sms-webhook
 Metod:  POST
 Body:   {"secret":"<WEBHOOK_SECRET>","text":"%message%","sender":"%from%","received_at":"%sentStamp%"}
 ```
@@ -146,7 +146,7 @@ Body:   {"secret":"<WEBHOOK_SECRET>","text":"%message%","sender":"%from%","recei
 Tekshirish (haqiqiy pul harakatlanmaydi — mos keladigan buyurtma bo'lmasa `unmatched` bo'ladi):
 
 ```bash
-curl -X POST https://bitimax-backend.onrender.com/api/sms-webhook \
+curl -X POST https://bitmax-backend.onrender.com/api/sms-webhook \
   -H "Content-Type: application/json" \
   -d '{"secret":"<WEBHOOK_SECRET>","text":"Hisobingizga 1 234 som tushdi","sender":"TEST"}'
 ```

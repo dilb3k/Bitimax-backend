@@ -31,7 +31,7 @@ export function Hero({ stats }: { stats: PlatformStats | null }) {
         </h1>
 
         <p className="mt-5 max-w-prose text-base leading-relaxed text-muted sm:text-lg">
-          Raqamli akkauntlarni sotib olish har doim ishonchga tayangan. Bitimax o‘rtada turadi:
+          Raqamli akkauntlarni sotib olish har doim ishonchga tayangan. Bitmax o‘rtada turadi:
           to‘lovingiz kafilda saqlanadi, siz akkauntni tekshirasiz, va faqat shundan keyin pul
           sotuvchiga o‘tadi.
         </p>

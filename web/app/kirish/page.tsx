@@ -6,7 +6,7 @@ import { Loading } from '@/components/ui';
 
 export const metadata: Metadata = {
   title: 'Kirish',
-  description: 'Bitimax kabinetiga Telegram bot orqali xavfsiz kirish — parolsiz.',
+  description: 'Bitmax kabinetiga Telegram bot orqali xavfsiz kirish — parolsiz.',
   robots: { index: false, follow: false },
 };
 

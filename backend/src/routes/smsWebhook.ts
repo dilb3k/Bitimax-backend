@@ -117,7 +117,7 @@ router.post('/sms-webhook', webhookLimiter, async (req: Request, res: Response) 
 });
 
 router.get('/sms-webhook/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', service: 'bitimax-sms-webhook' });
+  res.json({ status: 'ok', service: 'bitmax-sms-webhook' });
 });
 
 export default router;

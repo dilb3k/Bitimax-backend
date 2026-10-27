@@ -77,7 +77,7 @@ function ThemeToggle() {
     const next = !document.documentElement.classList.contains('dark');
     document.documentElement.classList.toggle('dark', next);
     try {
-      localStorage.setItem('bitimax-theme', next ? 'dark' : 'light');
+      localStorage.setItem('bitmax-theme', next ? 'dark' : 'light');
     } catch {
       /* private mode — the choice just won't persist */
     }
@@ -123,7 +123,7 @@ export function Footer() {
           <div className="max-w-sm">
             <div className="mb-2 flex items-center gap-2.5">
               <LogoMark size={26} />
-              <p className="font-display text-lg font-bold text-ink">Bitimax</p>
+              <p className="font-display text-lg font-bold text-ink">Bitmax</p>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-muted">
               P2P escrow bozori. Pul kafilda saqlanadi, xaridor tasdiqlagach sotuvchiga o‘tadi.
@@ -166,7 +166,7 @@ export function Footer() {
                 </li>
                 <li>
                   <a
-                    href="https://t.me/bitimax_admin"
+                    href="https://t.me/bitmax_admin"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted hover:text-ink"
@@ -180,7 +180,7 @@ export function Footer() {
         </div>
 
         <p className="mt-8 border-t border-line pt-6 text-xs text-faint">
-          © {new Date().getFullYear()} Bitimax. Platformadan tashqaridagi kelishuvlarga tizim
+          © {new Date().getFullYear()} Bitmax. Platformadan tashqaridagi kelishuvlarga tizim
           javob bermaydi.
         </p>
       </div>

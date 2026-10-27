@@ -19,24 +19,24 @@ const body = Manrope({
   display: 'swap',
 });
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitimax.uz';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitmax.uz';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: {
-    default: 'Bitimax — Kafil bilan xavfsiz raqamli bozor',
-    template: '%s · Bitimax',
+    default: 'Bitmax — Kafil bilan xavfsiz raqamli bozor',
+    template: '%s · Bitmax',
   },
   description:
-    'Pulingiz siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi. Bitimax — P2P escrow (kafil) ' +
+    'Pulingiz siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi. Bitmax — P2P escrow (kafil) ' +
     'tizimida ishlaydigan raqamli akkauntlar bozori.',
-  keywords: ['escrow', 'kafil', 'garant', 'akkaunt sotish', 'Telegram akkaunt', 'Bitimax'],
+  keywords: ['escrow', 'kafil', 'garant', 'akkaunt sotish', 'Telegram akkaunt', 'Bitmax'],
   openGraph: {
-    title: 'Bitimax — Kafil bilan xavfsiz raqamli bozor',
+    title: 'Bitmax — Kafil bilan xavfsiz raqamli bozor',
     description: 'Pulingiz siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi.',
     type: 'website',
     locale: 'uz_UZ',
-    siteName: 'Bitimax',
+    siteName: 'Bitmax',
   },
   twitter: { card: 'summary_large_image' },
   robots: { index: true, follow: true },
@@ -55,7 +55,7 @@ export const viewport: Viewport = {
  */
 const noFlashTheme = `
 (function(){try{
-  var t = localStorage.getItem('bitimax-theme');
+  var t = localStorage.getItem('bitmax-theme');
   var dark = t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
   if (dark) document.documentElement.classList.add('dark');
 }catch(e){}})();`;

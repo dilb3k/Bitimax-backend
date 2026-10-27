@@ -56,7 +56,7 @@ class NotificationService {
     return this.send({
       type: 'admin',
       chatId: config.adminChatId,
-      message: `🤖 <b>Bitimax Admin</b>\n\n${message}`,
+      message: `🤖 <b>Bitmax Admin</b>\n\n${message}`,
       buttons,
     });
   }
@@ -99,7 +99,7 @@ class NotificationService {
           `pastdagi tugmani bosing.`,
         '',
         `⚠️ <b>${formatDeadline(openDeadline)} gacha oching</b> — aks holda pul avtomatik ` +
-          `sotuvchiga o‘tadi (siz hali ko‘rmagan bo‘lsangiz ham).`,
+          `balansingizga qaytariladi.`,
         `<i>Ma’lumotni ochgach, qaytarish uchun boshqa (qisqaroq) muddat boshlanadi — bu haqda ` +
           `o‘sha ekranda aytiladi.</i>`,
       ].join('\n'),
