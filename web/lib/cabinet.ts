@@ -102,6 +102,7 @@ export interface Credentials {
 
 export interface Listing {
   id: string;
+  listingCode?: string;
   title: string;
   price: number;
   category: string;
@@ -258,7 +259,7 @@ export const api = {
 
   listings: () => call<{ listings: Listing[] }>('listings'),
   sales: () => call<{ sales: Sale[] }>('sales'),
-  createListing: (payload: Record<string, unknown>) => post<{ id: string; status: string }>('listings', payload),
+  createListing: (payload: Record<string, unknown>) => post<{ id: string; listingCode: string; status: string }>('listings', payload),
   createDeal: (payload: Record<string, unknown>) =>
     post<{
       id: string;

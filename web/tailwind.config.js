@@ -23,12 +23,12 @@ module.exports = {
         warn: 'rgb(var(--warn) / <alpha-value>)',
       },
       fontFamily: {
-        display: ['var(--font-display)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['var(--font-body)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         sans: ['var(--font-body)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       borderRadius: {
-        card: '14px',
+        card: '10px',
       },
       maxWidth: {
         prose: '68ch',

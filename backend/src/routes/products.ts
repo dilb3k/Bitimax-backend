@@ -45,10 +45,13 @@ router.get('/', async (req: Request, res: Response) => {
     if (search && typeof search === 'string') {
       const term = search.trim().slice(0, 200);
       if (term.length > 0) {
-        filter.$text = { $search: term };
-        projection = { score: { $meta: 'textScore' } };
+        if (/^(?:[1-9]\d{5}|[A-Z][A-Z\d]{5})$/i.test(term.replace(/^#/, '')) && (/\d/.test(term) || term.startsWith('#'))) {
+          filter.listingCode = term.replace(/^#/, '').toUpperCase();
+          projection = null;
+        } else filter.$text = { $search: term };
+        if (filter.$text) projection = { score: { $meta: 'textScore' } };
         // Relevance first when the caller didn't ask for a specific ordering.
-        if (sort === '-createdAt') sortValue = { score: { $meta: 'textScore' } };
+        if (filter.$text && sort === '-createdAt') sortValue = { score: { $meta: 'textScore' } };
       }
     }
 
@@ -145,6 +148,7 @@ function serializeProduct(product: any) {
 
   return {
     _id: product._id,
+    listingCode: product.listingCode,
     title: product.title,
     description: product.description,
     price: product.price,

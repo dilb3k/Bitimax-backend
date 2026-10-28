@@ -54,7 +54,7 @@ export function MobileNav({ authed = false }: { authed?: boolean }) {
       {open && (
         <div id="mobile-navigation" className="surface absolute right-0 top-full mt-2 w-48 overflow-hidden py-1 shadow-lg">
           <Link
-            href="/#katalog"
+            href="/katalog"
             onClick={() => setOpen(false)}
             className="block px-4 py-2.5 text-sm text-ink hover:bg-raised"
           >

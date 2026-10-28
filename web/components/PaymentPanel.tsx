@@ -102,7 +102,7 @@ export function PaymentPanel({ transactionId }: { transactionId: string }) {
           Bu to‘lov hozir faol emas. Pul o‘tkazgan bo‘lsangiz, qayta to‘lamang —
           buyurtma raqami bilan yordam xizmatiga yozing.
         </Notice>
-        <Link href="/#katalog" className="btn-ghost mt-5">
+        <Link href="/katalog" className="btn-ghost mt-5">
           Katalogga qaytish
         </Link>
         <a

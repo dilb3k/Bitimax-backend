@@ -32,6 +32,7 @@ export function SellView() {
   const [tab, setTab] = useState<'listings' | 'sales'>('listings');
   const listings = useAsync(() => api.listings());
   const sales = useAsync(() => api.sales());
+  const [cancelId, setCancelId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +41,7 @@ export function SellView() {
     setError(null);
     try {
       await api.cancelListing(id);
+      setCancelId(null);
       await listings.reload();
     } catch (err: any) {
       setError(err?.message || 'Bekor qilib bo‘lmadi');
@@ -97,6 +99,15 @@ export function SellView() {
                 </Badge>
               </div>
 
+              <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-line pt-3">
+                {listing.listingCode && <><span className="font-mono text-sm text-muted">ID {listing.listingCode}</span><CopyButton value={listing.listingCode} label="ID’ni nusxalash" /></>}
+                {['active', 'pending_review', 'draft', 'rejected'].includes(listing.status) && <button type="button" onClick={() => setCancelId(listing.id)} className="ml-auto min-h-[44px] text-sm text-warn" disabled={busyId !== null}>Bekor qilish</button>}
+              </div>
+              {cancelId === listing.id && <div className="mt-3 rounded-lg border border-line bg-raised p-4">
+                <p className="text-sm">E’lon katalogdan olib tashlanadi. Bekor qilasizmi?</p>
+                <div className="mt-3 flex gap-2"><SubmitButton busy={busyId === listing.id} disabled={busyId !== null} onClick={() => cancel(listing.id)}>Ha, bekor qilish</SubmitButton><button type="button" disabled={busyId !== null} onClick={() => setCancelId(null)} className="btn-ghost">Ortga</button></div>
+              </div>}
+
               {listing.moderationNote && (
                 <p className="mt-3 rounded-lg bg-raised px-3 py-2 text-xs leading-relaxed text-muted">
                   Moderator izohi: {listing.moderationNote}
@@ -113,13 +124,7 @@ export function SellView() {
                   </div>
                   <div className="ml-auto flex gap-2">
                     <CopyButton value={listing.dealCode} />
-                    {['active', 'pending_review', 'draft'].includes(listing.status) && <SubmitButton
-                      busy={busyId === listing.id}
-                      onClick={() => cancel(listing.id)}
-                      className="btn-ghost px-2.5 py-1.5 text-xs"
-                    >
-                      Bekor qilish
-                    </SubmitButton>}
+
                   </div>
                 </div>
               )}

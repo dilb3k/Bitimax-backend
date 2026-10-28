@@ -8,6 +8,7 @@ export interface Seller {
 
 export interface Product {
   _id: string;
+  listingCode?: string;
   status: 'active' | 'reserved' | 'sold';
   title: string;
   description: string;

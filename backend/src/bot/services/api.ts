@@ -49,6 +49,7 @@ export class BotApiService {
   }
 
   async createProduct(data: {
+    productId?: string;
     sellerId: string;
     title: string;
     description: string;
@@ -61,7 +62,12 @@ export class BotApiService {
     tags?: string[];
     images?: string[];
   }) {
+    if (data.productId) {
+      const existing = await Product.findOne({ _id: data.productId, sellerId: data.sellerId });
+      if (existing) return existing;
+    }
     const product = new Product({
+      ...(data.productId ? { _id: data.productId } : {}),
       sellerId: data.sellerId,
       title: data.title,
       description: data.description,
@@ -69,9 +75,8 @@ export class BotApiService {
       category: data.category,
       tags: data.tags || [],
       images: data.images || [],
-      // New listings queue for moderation instead of going straight to the catalog — one
-      // fake listing reaching a buyer costs more trust than every legitimate listing gains.
-      status: 'pending_review',
+      // Seller reviews the listing before confirming publication.
+      status: 'active',
     });
 
     // Goes through the model method so credentials are encrypted before they ever touch disk.
@@ -82,7 +87,13 @@ export class BotApiService {
       additionalInfo: data.additionalInfo,
     });
 
-    await product.save();
+    try { await product.save(); } catch (error: any) {
+      if (error?.code === 11000 && data.productId) {
+        const existing = await Product.findOne({ _id: data.productId, sellerId: data.sellerId });
+        if (existing) return existing;
+      }
+      throw error;
+    }
     await User.findByIdAndUpdate(data.sellerId, { $inc: { 'sellerStats.listed': 1 } });
 
     return product;
@@ -157,8 +168,12 @@ export class BotApiService {
 
   /** Seller cancels their own unclaimed deal, invalidating the code. */
   async cancelDeal(productId: string, sellerId: string) {
+    return this.cancelListing(productId, sellerId);
+  }
+
+  async cancelListing(productId: string, sellerId: string) {
     return Product.findOneAndUpdate(
-      { _id: productId, sellerId, listingType: 'private', status: 'active' },
+      { _id: productId, sellerId, status: { $in: ['active', 'pending_review', 'draft', 'rejected'] } },
       { $set: { status: 'archived' }, $unset: { dealCode: '' } },
       { new: true }
     );
@@ -169,17 +184,17 @@ export class BotApiService {
     const filter: Record<string, unknown> = { status: 'active', listingType: 'public' };
     if (category) filter.category = category;
 
-    const [products, total] = await Promise.all([
-      Product.find(filter)
+    const total = await Product.countDocuments(filter);
+    const pages = Math.max(1, Math.ceil(total / limit));
+    page = Math.min(pages, Math.max(1, Number.isSafeInteger(page) ? page : 1));
+    const products = await Product.find(filter)
         .select('-sensitiveData')
-        .sort('-createdAt')
+        .sort({ createdAt: -1, _id: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
-        .populate('sellerId', 'telegramId username trustLevel sellerStats'),
-      Product.countDocuments(filter),
-    ]);
+        .populate('sellerId', 'telegramId username trustLevel sellerStats');
 
-    return { products, total, pages: Math.ceil(total / limit) };
+    return { products, total, pages, page };
   }
 
   async getUserProducts(userId: string) {

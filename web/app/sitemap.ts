@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitimax.uz';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://web-three-eosin-46.vercel.app';
 
 /** Refreshed hourly — new listings should be findable without a redeploy. */
 export const revalidate = 3600;
@@ -8,6 +8,8 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: SITE, changeFrequency: 'hourly', priority: 1 },
+    { url: `${SITE}/katalog`, changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${SITE}/shartlar`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE}/kod`, changeFrequency: 'monthly', priority: 0.6 },
   ];
 

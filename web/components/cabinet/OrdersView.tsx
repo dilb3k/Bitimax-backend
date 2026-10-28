@@ -72,7 +72,7 @@ export function OrdersView() {
           hint="Katalogdan mahsulot tanlang yoki sotuvchi bergan bitim kodini kiriting."
           action={
             <div className="mt-2 flex flex-wrap justify-center gap-2">
-              <Link href="/#katalog" className="btn-accent text-sm">
+              <Link href="/katalog" className="btn-accent text-sm">
                 Katalogni ochish
               </Link>
               <Link href="/kod" className="btn-ghost text-sm">

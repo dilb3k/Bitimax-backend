@@ -39,20 +39,20 @@ export function Header() {
   const user = useSessionDisplay();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-ground/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-line bg-surface">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface focus:p-3">Asosiy qismga o‘tish</a>
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <Logo priority />
-          <span className="hidden text-xs text-faint sm:inline">Raqamli bozor</span>
+
         </Link>
 
-        <nav className="flex items-center gap-2">
-          <Link href="/#katalog" className="hidden px-3 py-2 text-sm text-muted hover:text-ink sm:block">
+        <nav className="flex items-center gap-1 sm:gap-2">
+          <Link href="/katalog" className="hidden px-3 py-2 text-sm text-muted hover:text-ink sm:block">
             Katalog
           </Link>
           <Link href="/kod" className="hidden px-3 py-2 text-sm text-muted hover:text-ink sm:block">
-            Kod bilan
+            Bitim kodi
           </Link>
           <Link href="/kabinet/yangi" className="hidden items-center gap-1 px-3 py-2 text-sm font-semibold text-accent lg:flex">+ E’lon berish</Link>
           <ThemeToggle />
@@ -118,74 +118,14 @@ function ThemeToggle() {
 }
 
 export function Footer() {
-  return (
-    <footer className="mt-8 border-t border-line bg-surface">
-      <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="max-w-sm">
-            <div className="mb-2 flex items-center gap-2.5">
-              <LogoMark size={26} />
-              <p className="font-display text-lg font-bold text-ink">Bitmax</p>
-            </div>
-            <p className="mt-2 text-sm leading-relaxed text-muted">
-              Raqamli savdo uchun kafil. E’lon, to‘lov va bitimni boshqarish — web va Telegram’da.
-            </p>
-          </div>
-
-          <div className="flex gap-12 text-sm">
-            <div>
-              <p className="mb-2 text-xs uppercase tracking-wider text-faint">Havolalar</p>
-              <ul className="space-y-1.5">
-                <li>
-                  <Link href="/#katalog" className="text-muted hover:text-ink">
-                    Katalog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/kod" className="text-muted hover:text-ink">
-                    Kod bilan sotib olish
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/kabinet" className="text-muted hover:text-ink">
-                    Kabinet
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <p className="mb-2 text-xs uppercase tracking-wider text-faint">Aloqa</p>
-              <ul className="space-y-1.5">
-                <li>
-                  <a
-                    href={botLink()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted hover:text-ink"
-                  >
-                    Telegram bot
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://t.me/bitimax_admin"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted hover:text-ink"
-                  >
-                    Qo‘llab-quvvatlash
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <p className="mt-8 border-t border-line pt-6 text-xs text-faint">
-          © {new Date().getFullYear()} Bitmax. Platformadan tashqaridagi kelishuvlarga tizim
-          javob bermaydi.
-        </p>
-      </div>
-    </footer>
-  );
+  return <footer className="mt-8 border-t border-line bg-surface pb-20 lg:pb-0">
+    <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-7 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-8">
+      <div className="flex items-center gap-3"><LogoMark size={22} /><span className="font-semibold">Bitmax</span><span className="text-faint">© {new Date().getFullYear()}</span></div>
+      <nav aria-label="Qo‘shimcha havolalar" className="flex flex-wrap gap-x-6 gap-y-3 text-muted">
+        <Link href="/shartlar" className="hover:text-ink">Savdo shartlari</Link>
+        <a href={botLink()} target="_blank" rel="noopener noreferrer" className="hover:text-ink">Telegram bot</a>
+        <a href="https://t.me/bitimax_admin" target="_blank" rel="noopener noreferrer" className="hover:text-ink">Yordam</a>
+      </nav>
+    </div>
+  </footer>;
 }

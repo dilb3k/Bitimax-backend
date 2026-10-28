@@ -1,5 +1,7 @@
 # Bitmax web experience
 
+Latest marketplace and bot behavior: [Marketplace flow](MARKETPLACE-FLOW.md). Public listings now publish immediately after seller confirmation; the update below supersedes earlier moderation copy.
+
 The website and Telegram bot share the same payment, escrow and ledger services. The project directory stays `Bitimax`; the product label is `Bitmax` and the Telegram account remains `bitimax_bot`.
 
 ## User journeys

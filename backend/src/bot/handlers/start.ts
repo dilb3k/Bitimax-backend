@@ -1,4 +1,5 @@
 import { Composer, Scenes } from 'telegraf';
+import { sendProductDetail } from './catalog';
 import { User } from '../../models/User';
 import { LoginRequest } from '../../models/LoginRequest';
 import { audit } from '../../models/AuditLog';
@@ -47,15 +48,8 @@ startHandler.start(async (ctx) => {
     return;
   }
   if (payload?.startsWith('buy_')) {
-    const productId = payload.slice(4);
-    await ctx.replyWithHTML(
-      `Tanlangan mahsulotni ochish uchun pastdagi tugmani bosing:`,
-      {
-        reply_markup: {
-          inline_keyboard: [[{ text: '🔍 Mahsulotni ko‘rish', callback_data: `detail_${productId}` }]],
-        },
-      }
-    );
+    if (!await sendProductDetail(ctx, payload.slice(4))) await ctx.reply('E’lon topilmadi yoki yopilgan.');
+    return;
   }
 
   await ctx.replyWithHTML(
@@ -92,7 +86,7 @@ function helpText(): string {
     describeRefundPolicy(),
     '',
     `Komissiya: ${config.platformCommission}%. Minimal pul yechish: ${formatUzs(config.minPayoutAmount)}.`,
-    `Formadan chiqish: /cancel. Botni tekshirish: /healt.`,
+    `Formadan chiqish: /cancel. ID orqali qidirish: /id 123456. Botni tekshirish: /healt.`,
     `Yordam: ${botApi.supportLink()}`,
   ].join('\n');
 }

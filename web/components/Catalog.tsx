@@ -17,7 +17,8 @@ const SORTS = [
   { value: '-price', label: 'Qimmatidan' },
 ];
 
-export function Catalog() {
+export function Catalog({ standalone = false }: { standalone?: boolean }) {
+  const Heading = standalone ? 'h1' : 'h2';
   const [products, setProducts] = useState<Product[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -101,10 +102,10 @@ export function Catalog() {
   }
 
   return (
-    <section id="katalog" className="mx-auto max-w-6xl px-5 py-14 sm:px-8">
+    <section id="katalog" className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="eyebrow mb-2">O‘ZINGIZGA MOSINI TOPING</p><h2 className="text-3xl font-bold text-ink sm:text-4xl">Raqamli katalog</h2>
+          <Heading className="text-2xl font-bold text-ink">Akkauntlar katalogi</Heading>
           <p className="mt-1.5 text-sm text-muted">
             {loading && products.length === 0 ? (
               'Yuklanmoqda…'
@@ -127,7 +128,7 @@ export function Catalog() {
                 setSort(option.value);
                 setPage(1);
               }}
-              className={`rounded-md px-3 py-1.5 text-sm transition ${
+              className={`min-h-[44px] rounded-md px-3 py-1.5 text-sm transition ${
                 sort === option.value
                   ? 'bg-accent-soft font-medium text-ink'
                   : 'text-muted hover:text-ink'
@@ -139,7 +140,7 @@ export function Catalog() {
         </div>
       </div>
 
-      <div className="surface mb-5 p-4 sm:p-5">
+      <div className="mb-4">
         <label className="sr-only" htmlFor="qidiruv">
           Qidirish
         </label>
@@ -160,13 +161,13 @@ export function Catalog() {
             type="search"
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Nima qidiryapsiz?"
-            className="field pl-10"
+            placeholder="Akkaunt nomi yoki e’lon ID’si"
+            className="field min-h-[48px] pl-10"
           />
         </div>
       </div>
 
-      <details className="mb-5 rounded-xl border border-line bg-surface p-4" open={minPriceInput || maxPriceInput ? true : undefined}>
+      <details className="mb-4 border-b border-line pb-4">
         <summary className="cursor-pointer text-sm font-medium">Narx bo‘yicha saralash</summary>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <label className="text-sm text-muted" htmlFor="min-narx">
@@ -195,7 +196,7 @@ export function Catalog() {
       </div>
 
       </details>
-      <div className="mb-8 flex gap-2 overflow-x-auto pb-1">
+      <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
         <button
           type="button"
           onClick={() => pickCategory('')}

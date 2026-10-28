@@ -11,6 +11,7 @@ import { sellerHandler, createSellerWizard, createDealWizard, CATEGORIES } from 
 import { buyerHandler, createCodeWizard } from './handlers/buyer';
 import { adminHandler, createRoleWizard } from './handlers/admin';
 import { botApi } from './services/api';
+import { listingLookup } from './handlers/catalog';
 import { escapeHtml, formatUzs } from '../utils/helpers';
 
 /**
@@ -58,7 +59,6 @@ export async function startBot(): Promise<void> {
   });
 
   bot.use(session({ store: mongoSessionStore }));
-  bot.use(stage.middleware());
 
   /**
    * Registers the user and stops blocked accounts at the door. `isBlocked` existed in v1 but
@@ -78,10 +78,15 @@ export async function startBot(): Promise<void> {
       (ctx.state as any).user = user;
     } catch (err) {
       console.error('[Bot] Failed to resolve user:', err);
+      await ctx.reply('Hisobni yuklab bo‘lmadi. Birozdan keyin qayta urinib ko‘ring.');
+      return;
     }
 
     return next();
   });
+
+  bot.use(listingLookup);
+  bot.use(stage.middleware());
 
   bot.use(startHandler);
   bot.use(sellerHandler);

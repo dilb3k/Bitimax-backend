@@ -12,7 +12,7 @@ export default function NotFound() {
           Havola eskirgan bo‘lishi mumkin — mahsulot sotilgan yoki e’lon olib tashlangan.
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-2.5">
-          <Link href="/#katalog" className="btn-accent">
+          <Link href="/katalog" className="btn-accent">
             Katalogga qaytish
           </Link>
           <Link href="/kabinet" className="btn-ghost">

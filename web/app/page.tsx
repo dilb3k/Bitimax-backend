@@ -1,40 +1,22 @@
-import { Hero, RefundPolicy } from '@/components/Hero';
-import { Catalog } from '@/components/Catalog';
+import Link from 'next/link';
 import { Header, Footer } from '@/components/Chrome';
-import { getPolicy } from '@/lib/server/policy';
-import { DealCode } from '@/components/DealCode';
-import { PlatformStats, PublicPolicy } from '@/lib/api';
-
-// The landing numbers are the same for every visitor and go stale slowly, so they're fetched
-// on the server and cached rather than costing each visitor a client round trip.
-export const revalidate = 120;
-
-async function getStats(): Promise<PlatformStats | null> {
-  const backend = process.env.BACKEND_URL;
-  if (!backend) return null;
-  try {
-    const res = await fetch(`${backend}/api/products/stats`, { next: { revalidate: 120 }, signal: AbortSignal.timeout(8000) });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    // The catalog still renders without stats — a backend hiccup shouldn't blank the page.
-    return null;
-  }
-}
-
-export default async function HomePage() {
-  const [stats, policy] = await Promise.all([getStats(), getPolicy()]);
-
-  return (
-    <>
-      <Header />
-      <main id="main-content">
-        <Hero stats={stats} />
-        <Catalog />
-        <DealCode />
-        <RefundPolicy policy={policy} />
-      </main>
-      <Footer />
-    </>
-  );
+import { Catalog } from '@/components/Catalog';
+import { Icon } from '@/components/Icon';
+export default function HomePage() {
+  return <><Header /><main id="main-content">
+    <section className="border-b border-line bg-surface">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-8 sm:px-8 md:flex-row md:items-center md:justify-between md:py-12">
+        <div className="max-w-xl">
+          <h1 className="text-3xl font-bold leading-tight sm:text-4xl">Keyingi akkauntingiz shu yerda.</h1>
+          <p className="mt-3 max-w-lg text-sm leading-6 text-muted">Akkaunt tanlang, to‘lang va tekshiring. Bitmax to‘lovni bitim yakunlanguncha saqlaydi.</p>
+          <Link href="/shartlar" className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-accent"><Icon name="shield" width={17} /> To‘lov va qaytarish shartlari</Link>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link href="/kabinet/yangi" className="btn-accent"><Icon name="plus" width={18} /> Akkaunt sotish</Link>
+          <Link href="/kod" className="btn-ghost"><Icon name="code" width={18} /> Bitim kodini kiritish</Link>
+        </div>
+      </div>
+    </section>
+    <Catalog />
+  </main><Footer /></>;
 }

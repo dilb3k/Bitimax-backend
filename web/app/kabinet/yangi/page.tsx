@@ -8,7 +8,7 @@ export default function NewListingPage() {
     <>
       <h1 className="page-title mb-3">Yangi e’lon</h1>
       <p className="mb-6 text-sm leading-relaxed text-muted">
-        E’lon katalogda hamma uchun ko‘rinadi. Moderator tasdiqlagach chop etiladi.
+        Ma’lumotlarni kiriting va tekshiring. Tasdiqlaganingizdan keyin e’lon darhol katalogda chiqadi.
       </p>
       <SellerForm mode="listing" />
     </>

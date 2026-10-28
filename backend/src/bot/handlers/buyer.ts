@@ -1,4 +1,5 @@
 import { Composer, Scenes } from 'telegraf';
+import { sendCatalogPage, sendProductDetail } from './catalog';
 import { User } from '../../models/User';
 import { Product } from '../../models/Product';
 import { EscrowHold } from '../../models/EscrowHold';
@@ -143,47 +144,6 @@ async function loadOwnedEscrow(telegramId: number, escrowId: string) {
   return { escrow, user };
 }
 
-/** Renders one page of the public catalog — shared by the menu entry and the pager buttons. */
-async function sendCatalogPage(ctx: any, page: number, edit = false) {
-  const { products, total, pages } = await botApi.getActiveProducts(page, 10);
-
-  if (products.length === 0) {
-    const text = page === 1 ? 'Hozircha faol mahsulotlar mavjud emas. Keyinroq urinib ko‘ring.' : 'Boshqa mahsulot yo‘q.';
-    if (edit) await ctx.editMessageText(text);
-    else await ctx.reply(text);
-    return;
-  }
-
-  if (!edit) {
-    await ctx.replyWithHTML(
-      `<b>🛍 Mahsulotlar (sahifa ${page} / ${pages}, jami ${total})</b>\n\n` +
-        `<i>To‘liq katalog va filtrlar: ${config.siteUrl}</i>`
-    );
-  }
-
-  for (const product of products) {
-    const seller = product.sellerId as any;
-    const rating = seller?.sellerStats?.ratingCount
-      ? `⭐ ${(seller.sellerStats.ratingSum / seller.sellerStats.ratingCount).toFixed(1)} (${seller.sellerStats.ratingCount})`
-      : '⭐ yangi sotuvchi';
-
-    const msg = [
-      `<b>${escapeHtml(product.title)}</b>`,
-      escapeHtml(product.description.slice(0, 140)) + (product.description.length > 140 ? '…' : ''),
-      '',
-      `💰 <b>${formatUzs(product.price)}</b>`,
-      `📂 ${escapeHtml(product.category)}`,
-      `👤 ${rating}`,
-    ].join('\n');
-
-    await ctx.replyWithHTML(msg, productActionButtons(product._id.toString()));
-  }
-
-  if (pages > 1) {
-    await ctx.replyWithHTML(`<b>📄 Sahifa ${page} / ${pages}</b>`, catalogPageButtons(page, pages));
-  }
-}
-
 buyerHandler.hears(["🛍 Akkaunt sotib olish","Akkaunt sotib olish","🛍 Mahsulotlar","Mahsulotlar"], async (ctx) => sendCatalogPage(ctx, 1));
 
 // Real pagination — the old "/next" command only repeated the total count and never actually
@@ -283,44 +243,15 @@ buyerHandler.action(/^payment_status_([a-f0-9]{24})$/, async (ctx) => {
   }
 });
 
-buyerHandler.action(/^detail_(.+)$/, async (ctx) => {
-  try {
-    const productId = ctx.match[1];
-    const product = await Product.findById(productId).populate(
-      'sellerId',
-      'telegramId username trustLevel sellerStats'
-    );
-
-    if (!product) {
-      await ctx.answerCbQuery('Mahsulot topilmadi');
-      return;
-    }
-
-    const seller = product.sellerId as any;
-    const detailText = [
-      `<b>📋 ${escapeHtml(product.title)}</b>`,
-      '',
-      escapeHtml(product.description),
-      '',
-      `<b>Narx:</b> ${formatUzs(product.price)}`,
-      `<b>Kategoriya:</b> ${escapeHtml(product.category)}`,
-      `<b>Sotuvchi:</b> ${escapeHtml(seller?.username || 'noma’lum')} (${seller?.trustLevel || 'new'})`,
-      `<b>Sotgan:</b> ${seller?.sellerStats?.sold ?? 0} ta`,
-      '',
-      `🛡 <b>Escrow himoyasi:</b>`,
-      describeRefundPolicy(),
-      '',
-      `<i>Login/parol to‘lov tasdiqlangandan keyin ochiladi.</i>`,
-    ].join('\n');
-
-    await ctx.editMessageText(detailText, {
-      parse_mode: 'HTML',
-      reply_markup: productActionButtons(productId).reply_markup,
-    });
-    await ctx.answerCbQuery();
-  } catch (error) {
-    await ctx.answerCbQuery(describeError(error));
-  }
+buyerHandler.action(/^detail_([a-f0-9]{24})(?:_(\d+))?$/, async ctx => {
+  await ctx.answerCbQuery();
+  const found = await sendProductDetail(ctx, ctx.match[1], Number(ctx.match[2] || 1), true);
+  if (!found) await ctx.reply('E’lon topilmadi yoki katalogdan olib tashlangan.');
+});
+buyerHandler.action(/^description_([a-f0-9]{24})$/, async ctx => {
+  const p = await Product.findOne({ _id: ctx.match[1], listingType: 'public', status: { $in: ['active', 'reserved', 'sold'] } }).select('description');
+  await ctx.answerCbQuery();
+  if (p) await ctx.reply(p.description);
 });
 
 /**

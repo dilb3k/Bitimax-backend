@@ -42,6 +42,7 @@ export function SellerForm({ mode }: { mode: Mode }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [listingDone, setListingDone] = useState(false);
+  const [listingCode, setListingCode] = useState('');
   const [deal, setDeal] = useState<DealResult | null>(null);
 
   if (loading) return <Loading />;
@@ -67,13 +68,14 @@ export function SellerForm({ mode }: { mode: Mode }) {
         const created = await api.createDeal({ title: title.trim(), price: priceValue, ...credentials });
         setDeal(created);
       } else {
-        await api.createListing({
+        const created = await api.createListing({
           title: title.trim(),
           description: description.trim(),
           price: priceValue,
           category,
           ...credentials,
         });
+        setListingCode(created.listingCode);
         setListingDone(true);
       }
       // The plaintext password has no reason to stay in component state once it is stored.
@@ -139,11 +141,12 @@ export function SellerForm({ mode }: { mode: Mode }) {
     return (
       <div className="surface p-6 text-center sm:p-8">
         <p className="text-3xl" aria-hidden="true">
-          <Icon name="clock" width={32} height={32} className="mx-auto text-accent" />
+          <Icon name="check" width={32} height={32} className="mx-auto text-accent" />
         </p>
-        <h2 className="mt-3 text-xl font-bold text-ink">E’lon moderatorga yuborildi</h2>
+        <h2 className="mt-3 text-xl font-bold text-ink">E’lon katalogda</h2>
+        <div className="mt-4 flex items-center justify-center gap-3"><span className="font-mono text-2xl">#{listingCode}</span><CopyButton value={listingCode} label="ID’ni nusxalash" /></div>
         <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
-          Tasdiqlangach katalogda paydo bo‘ladi va botda sizga xabar keladi.
+          Xaridor e’lonni katalogdan yoki shu ID orqali botdan topadi.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Link href="/kabinet/sotuv" className="btn-accent text-sm">

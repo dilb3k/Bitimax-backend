@@ -555,6 +555,7 @@ router.get('/listings', async (req: Request, res: Response) => {
     res.json({
       listings: products.map((p: any) => ({
         id: String(p._id),
+        listingCode: p.listingCode,
         title: p.title,
         price: p.price,
         category: p.category,
@@ -637,13 +638,13 @@ router.post('/listings', writeLimiter, async (req: Request, res: Response) => {
     });
 
     await notificationService.notifyAdmin(
-      `🆕 <b>Yangi e’lon ko‘rikda</b> (saytdan)\n\n` +
+      `🆕 <b>Yangi e’lon katalogda</b> (saytdan)\n\n` +
         `${escapeHtml(product.title)}\n${formatUzs(product.price)}\n` +
         `Sotuvchi: @${escapeHtml(user.username || String(user.telegramId))} (${user.trustLevel})\n\n` +
-        `<i>“🛡 Moderatsiya” bo‘limida ko‘ring.</i>`
+        `<i>E’lon katalogda chop etildi.</i>`
     );
 
-    res.status(201).json({ id: String(product._id), status: product.status });
+    res.status(201).json({ id: String(product._id), listingCode: product.listingCode, status: product.status });
   } catch (error: any) {
     if (badRequest(res, error)) return;
     return fail(res, error);
@@ -700,8 +701,8 @@ router.post('/listings/:id/cancel', writeLimiter, validateObjectId(), async (req
   try {
     const user = actor(req);
     // Scoped by sellerId inside cancelDeal, so an id belonging to somebody else matches nothing.
-    const cancelled = await botApi.cancelDeal(req.params.id, String(user._id));
-    if (!cancelled) return res.status(409).json({ error: 'Bitim topilmadi yoki allaqachon boshlangan' });
+    const cancelled = await botApi.cancelListing(req.params.id, String(user._id));
+    if (!cancelled) return res.status(409).json({ error: 'E’lon topilmadi, band qilingan yoki savdo boshlangan' });
     res.json({ ok: true });
   } catch (error: any) {
     return fail(res, error);

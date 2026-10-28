@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { ProductStatus, ListingType } from '../types';
 import { encryptSecret, decryptSecret } from '../utils/crypto';
 import { config } from '../config';
+import { nextListingCode } from './Sequence';
 
 export interface ISensitiveData {
   login: string;
@@ -12,6 +13,7 @@ export interface ISensitiveData {
 
 export interface IProduct extends Document {
   sellerId: mongoose.Types.ObjectId;
+  listingCode?: string;
   title: string;
   description: string;
   price: number;
@@ -65,6 +67,7 @@ export interface IProduct extends Document {
 const ProductSchema = new Schema<IProduct>(
   {
     sellerId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    listingCode: { type: String, unique: true, sparse: true, immutable: true, match: /^(?:[1-9]\d{5}|[A-Z][A-Z\d]{5})$/ },
     title: { type: String, required: true, trim: true, maxlength: 120 },
     description: { type: String, required: true, trim: true, maxlength: 4000 },
     price: { type: Number, required: true, min: 1000 },
@@ -140,6 +143,10 @@ ProductSchema.index({ listingType: 1, status: 1, dealExpiresAt: 1 });
 ProductSchema.index({ title: 'text', description: 'text', tags: 'text' });
 // Lets the sweeper find lapsed reservations cheaply.
 ProductSchema.index({ status: 1, reservedUntil: 1 });
+
+ProductSchema.pre('validate', async function () {
+  if (this.isNew && !this.listingCode) this.listingCode = await nextListingCode();
+});
 
 ProductSchema.methods.setCredentials = function (this: IProduct, data: ISensitiveData) {
   this.sensitiveData = {

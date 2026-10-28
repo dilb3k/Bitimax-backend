@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitimax.uz';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://web-three-eosin-46.vercel.app';
 
 export default function robots(): MetadataRoute.Robots {
   return {

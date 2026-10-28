@@ -65,7 +65,7 @@ services:
 
       # ─── Web
       - key: SITE_URL
-        sync: false
+        value: https://web-three-eosin-46.vercel.app
       - key: CORS_ORIGINS
         sync: false
       - key: BOT_USERNAME

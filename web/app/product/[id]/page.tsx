@@ -48,7 +48,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
       <Header />
       <main id="main-content">
         <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
-          <Link href="/#katalog" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
+          <Link href="/katalog" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
             ← Katalogga qaytish
           </Link>
 
@@ -66,6 +66,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
               </div>
 
               <h1 className="text-2xl font-bold leading-snug text-ink sm:text-3xl">{product.title}</h1>
+              {product.listingCode && <p className="mt-2 font-mono text-sm text-faint">E’lon ID: {product.listingCode}</p>}
 
               {seller && (
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">

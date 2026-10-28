@@ -1,17 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
-import { Bricolage_Grotesque, Manrope } from 'next/font/google';
+import { Manrope } from 'next/font/google';
 import './globals.css';
 
 // next/font downloads and self-hosts these at build time, so there is no runtime request to
 // a font CDN — no third-party connection, no flash of fallback text.
-const display = Bricolage_Grotesque({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['600', '700', '800'],
-  variable: '--font-display',
-  display: 'swap',
-});
-
 const body = Manrope({
   subsets: ['latin', 'latin-ext'],
   weight: ['400', '500', '600', '700'],
@@ -19,7 +12,7 @@ const body = Manrope({
   display: 'swap',
 });
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://bitimax.uz';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://web-three-eosin-46.vercel.app';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
@@ -66,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const nonce = headers().get('x-nonce') ?? undefined;
 
   return (
-    <html lang="uz" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
+    <html lang="uz" className={body.variable} suppressHydrationWarning>
       <head>
         {/*
           suppressHydrationWarning: the browser strips `nonce` off the DOM node once it has

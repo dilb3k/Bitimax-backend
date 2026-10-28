@@ -37,9 +37,7 @@ export function RefundPolicy({ policy }: { policy: PublicPolicy | null }) {
       <div>
         <p className="eyebrow">SAVDODAN OLDIN</p>
         <h2 className="mt-3 text-3xl font-bold">
-          Shartlar ochiq.
-          <br />
-          Qaror sizniki.
+          Pul qachon qaytariladi?
         </h2>
         <p className="mt-4 text-sm leading-7 text-muted">
           Ma’lumotni ochishdan oldin qaytarish shartlarini ko‘ring. Yakuniy

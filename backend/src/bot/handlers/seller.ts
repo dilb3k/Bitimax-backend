@@ -1,9 +1,14 @@
 import { Composer, Scenes } from 'telegraf';
+import { Types } from 'mongoose';
+import { encryptSecret, decryptSecret } from '../../utils/crypto';
+import { payoutService } from '../../services/payoutService';
+import { Product } from '../../models/Product';
+import { describeError } from '../utils/errors';
 import { User } from '../../models/User';
 import { botApi } from '../services/api';
 import { notificationService } from '../../services/notificationService';
 import { config } from '../../config';
-import { escapeHtml, formatUzs, formatDealCode } from '../../utils/helpers';
+import { escapeHtml, formatUzs, formatDealCode, isValidUzCard, maskCard } from '../../utils/helpers';
 import { uploadTelegramPhoto, ImageUploadError } from '../../services/cloudinaryService';
 import { bailIfCancelled } from '../wizards/guard';
 import {
@@ -66,7 +71,7 @@ function makePhotoStep(sessionKey: 'productData' | 'dealData', onFinish: (ctx: a
     const photoSizes = ctx.message?.photo;
     if (photoSizes?.length) {
       if (images.length >= config.maxProductImages) {
-        await ctx.reply(`Allaqachon ${config.maxProductImages} tadan rasm qo‘shilgan — “✅ Tayyor” ni bosing.`);
+        await ctx.reply(`Allaqachon ${config.maxProductImages} tadan rasm qo‘shilgan — “Tayyor” ni bosing.`);
         return;
       }
 
@@ -110,24 +115,7 @@ sellerHandler.hears(["💼 Akkaunt sotish","Akkaunt sotish","➕ Yangi e’lon",
     await user.save();
   }
 
-  await ctx.replyWithHTML(
-    [
-      `<b>⚠️ MUHIM OGOHLANTIRISH</b>`,
-      '',
-      `Siz akkauntni <b>bozorga</b> qo‘ymoqchisiz — e’lon katalogda hamma uchun ko‘rinadi.`,
-      '',
-      `• Platformadan tashqaridagi kelishuvlarga tizim javob bermaydi`,
-      `• Muvaffaqiyatli bitimdan <b>${config.platformCommission}% komissiya</b> ushlanadi`,
-      `• Akkaunt ma’lumotlari to‘g‘ri va ishlaydigan holatda`,
-      `• Akkaunt boshqa joyda sotilmagan va siz uni qaytarib olmaysiz`,
-      `• Pul xaridor tasdiqlagach yoki ${config.autoReleaseHours} soatdan keyin balansingizga tushadi`,
-      '',
-      `<b>Soxta akkaunt = bloklash + barcha e’lonlar arxivi.</b>`,
-      '',
-      `<i>Xaridor allaqachon topilgan bo‘lsa — “🤝 Kafil bitim” ni tanlang.</i>`,
-    ].join('\n'),
-    confirmSellerWarning()
-  );
+  await (ctx as any).scene.enter(SELLER_WIZARD);
 });
 
 /**
@@ -189,44 +177,58 @@ sellerHandler.action(/^deal_cancel_(.+)$/, async (ctx) => {
   await ctx.answerCbQuery('Bekor qilindi');
 });
 
-sellerHandler.hears(["📋 E’lonlarim","E’lonlarim","📋 Mening e’lonlarim","Mening e’lonlarim"], async (ctx) => {
-  const user = await User.findOne({ telegramId: ctx.from!.id });
+const listingStatus: Record<string, string> = {
+  active: 'Sotuvda', pending_review: 'Tekshirilmoqda', rejected: 'Rad etilgan', reserved: 'To‘lov kutilmoqda',
+  sold: 'Sotilgan', refunded: 'Qaytarilgan', disputed: 'Nizoda', archived: 'Bekor qilingan', draft: 'Qoralama',
+};
+async function showMyListings(ctx: any, requestedPage = 1, edit = false) {
+  const user = await User.findOne({ telegramId: ctx.from.id });
   if (!user) return;
-
-  const products = await botApi.getUserProducts(user._id.toString());
-
-  if (products.length === 0) {
-    await ctx.reply('Sizda hali e’lonlar yo‘q. “💼 Akkaunt sotish” yoki “🤝 Kafil bitim” ni bosing.');
-    return;
-  }
-
-  const emoji: Record<string, string> = {
-    active: '🟢',
-    pending_review: '🕐',
-    rejected: '❌',
-    reserved: '🔒',
-    sold: '🔴',
-    refunded: '🔄',
-    disputed: '⚖️',
-    archived: '📦',
-    draft: '✏️',
-  };
-
-  const lines = products.map((p) => {
-    const head = `${emoji[p.status] || '•'} <b>${escapeHtml(p.title)}</b>`;
-    const body = `   ${formatUzs(p.price)} — ${p.status}`;
-    // A live deal code is the one thing the seller comes back to this screen for — they need
-    // to re-send it when the buyer loses the message.
-    const code =
-      p.listingType === 'private' && p.dealCode && p.status === 'active'
-        ? `\n   🔑 Kod: <code>${formatDealCode(p.dealCode)}</code>`
-        : p.listingType === 'private'
-          ? `\n   🤝 Kelishilgan bitim`
-          : '';
-    return `${head}\n${body}${code}`;
-  });
-
-  await ctx.replyWithHTML([`<b>📋 Mening e’lonlarim (${products.length})</b>`, '', ...lines].join('\n'));
+  const count = await Product.countDocuments({ sellerId: user._id });
+  const pages = Math.max(1, Math.ceil(count / 10));
+  const page = Math.min(pages, Math.max(1, requestedPage));
+  const products = await Product.find({ sellerId: user._id }).select('-sensitiveData').sort({ createdAt: -1, _id: -1 }).skip((page - 1) * 10).limit(10);
+  const rows: any[][] = products.map(p => [{ text: `${p.listingCode || '—'} · ${p.title.slice(0, 35)} · ${listingStatus[p.status]}`, callback_data: `my_listing_${p._id}` }]);
+  const pager = [];
+  if (page > 1) pager.push({ text: '← Oldingi', callback_data: `my_listings_${page - 1}` });
+  if (page < pages) pager.push({ text: 'Keyingi →', callback_data: `my_listings_${page + 1}` });
+  if (pager.length) rows.push(pager);
+  rows.push([{ text: '＋ Yangi e’lon', callback_data: 'seller_accept_warning' }]);
+  const text = `<b>E’lonlarim</b> · ${page}/${pages}\n\n${count ? 'Batafsil ko‘rish yoki bekor qilish uchun e’lonni tanlang.' : 'Hali e’lon yo‘q. Birinchi akkauntingizni sotuvga qo‘ying.'}`;
+  const options = { parse_mode: 'HTML' as const, reply_markup: { inline_keyboard: rows } };
+  if (edit) await ctx.editMessageText(text, options);
+  else await ctx.reply(text, options);
+}
+sellerHandler.hears(['📋 E’lonlarim', 'E’lonlarim', '📋 Mening e’lonlarim', 'Mening e’lonlarim'], ctx => showMyListings(ctx));
+sellerHandler.action(/^my_listings_(\d+)$/, async ctx => { await ctx.answerCbQuery(); await showMyListings(ctx, Number(ctx.match[1]), true); });
+sellerHandler.action(/^my_listing_([a-f0-9]{24})$/, async ctx => {
+  const user = await User.findOne({ telegramId: ctx.from.id });
+  const p = user && await Product.findOne({ _id: ctx.match[1], sellerId: user._id }).select('-sensitiveData');
+  if (!p) return void await ctx.answerCbQuery('E’lon topilmadi');
+  await ctx.answerCbQuery();
+  const rows: any[][] = [];
+  if (['active', 'pending_review', 'draft', 'rejected'].includes(p.status)) rows.push([{ text: 'E’lonni bekor qilish', callback_data: `listing_cancel_ask_${p._id}` }]);
+  rows.push([{ text: '← E’lonlarim', callback_data: 'my_listings_1' }]);
+  await ctx.editMessageText([
+    `<b>${escapeHtml(p.title)}</b>`, `ID: <code>${p.listingCode || '—'}</code>`,
+    `Narx: <b>${formatUzs(p.price)}</b>`, `Holat: ${listingStatus[p.status]}`,
+    p.listingType === 'private' && p.dealCode && p.status === 'active' ? `Bitim kodi: <code>${formatDealCode(p.dealCode)}</code>` : '',
+    '', 'Band qilingan yoki sotilgan e’lonni bekor qilib bo‘lmaydi.',
+  ].join('\n'), { parse_mode: 'HTML', reply_markup: { inline_keyboard: rows } });
+});
+sellerHandler.action(/^listing_cancel_ask_([a-f0-9]{24})$/, async ctx => {
+  await ctx.answerCbQuery();
+  await ctx.editMessageText('E’lonni bekor qilasizmi? U katalogdan olib tashlanadi. Qayta sotish uchun yangi e’lon yaratasiz.', { reply_markup: { inline_keyboard: [
+    [{ text: 'Ha, bekor qilish', callback_data: `listing_cancel_do_${ctx.match[1]}` }],
+    [{ text: 'Ortga qaytish', callback_data: `my_listing_${ctx.match[1]}` }],
+  ] } });
+});
+sellerHandler.action(/^listing_cancel_do_([a-f0-9]{24})$/, async ctx => {
+  const user = await User.findOne({ telegramId: ctx.from.id });
+  const cancelled = user && await botApi.cancelListing(ctx.match[1], String(user._id));
+  if (!cancelled) return void await ctx.answerCbQuery('E’lon topilmadi yoki savdo boshlangan', { show_alert: true });
+  await ctx.answerCbQuery('E’lon bekor qilindi');
+  await showMyListings(ctx, 1, true);
 });
 
 sellerHandler.hears(["📊 Statistika","Statistika"], async (ctx) => {
@@ -311,7 +313,7 @@ export function createDealWizard() {
           `Nima sotyapsiz? Qisqa nom yozing:`,
           `<i>masalan: “Instagram @mynick” yoki “Steam akkaunt CS2”</i>`,
           '',
-          `<i>Istalgan qadamda "🏠 Asosiy menu" ni bosib bekor qilishingiz mumkin.</i>`,
+          `<i>Istalgan qadamda "Asosiy menu" ni bosib bekor qilishingiz mumkin.</i>`,
         ].join('\n'),
         backButton()
       );
@@ -339,8 +341,9 @@ export function createDealWizard() {
     async (ctx: any) => {
       if (await bailIfCancelled(ctx, ['dealData'])) return;
 
-      const price = parseInt(String(ctx.message?.text || '').replace(/\D/g, ''), 10);
-      if (isNaN(price) || price < 1000) {
+      const rawPrice = String(ctx.message?.text || '').trim();
+      const price = /^\d[\d\s]*$/.test(rawPrice) ? Number(rawPrice.replace(/\s/g, '')) : NaN;
+      if (!Number.isSafeInteger(price) || price < 1000 || price > 1_000_000_000) {
         await ctx.reply(
           `Minimal summa 1 000 UZS. “${escapeHtml(ctx.session.dealData.title)}” uchun narxni qaytadan kiriting:`
         );
@@ -481,13 +484,16 @@ async function renderProductReview(ctx: any) {
       `<b>Siz olasiz:</b> ${formatUzs(data.price - commission)}`,
       `<b>Komissiya:</b> ${formatUzs(commission)}`,
       '',
-      `<i>Tasdiqlagandan keyin e’lon moderatorga yuboriladi.</i>`,
+      `<b>Karta:</b> ${escapeHtml(data.cardMasked)}`,
+      `<b>Karta egasi:</b> ${escapeHtml(data.cardHolder)}`,
+      '',
+      `<i>Tasdiqlagach e’lon darhol katalogda chiqadi. Komissiya muvaffaqiyatli savdodan ushlanadi.</i>`,
     ].join('\n'),
     {
       reply_markup: {
         inline_keyboard: [
           [
-            { text: '✅ Yuborish', callback_data: 'seller_publish_confirm' },
+            { text: '✅ Tasdiqlash va e’lon berish', callback_data: 'seller_publish_confirm' },
             { text: '❌ Bekor qilish', callback_data: 'seller_publish_cancel' },
           ],
         ],
@@ -506,10 +512,10 @@ export function createSellerWizard() {
   return new Scenes.WizardScene<any>(
     SELLER_WIZARD,
     async (ctx: any) => {
-      ctx.session.productData = {};
+      ctx.session.productData = { productId: new Types.ObjectId().toString() };
       await ctx.replyWithHTML(
-        '<b>📝 1/7 — Nomi</b>\n\nMahsulot nomini kiriting (masalan: “Instagram 12k obunachi, 2019”):\n\n' +
-          '<i>Istalgan qadamda "🏠 Asosiy menu" ni bosib bekor qilishingiz mumkin.</i>',
+        '<b>1. Nomi</b>\n\nMahsulot nomini kiriting (masalan: “Instagram 12k obunachi, 2019”):\n\n' +
+          '<i>Istalgan qadamda "Asosiy menu" ni bosib bekor qilishingiz mumkin.</i>',
         backButton()
       );
       return ctx.wizard.next();
@@ -525,7 +531,7 @@ export function createSellerWizard() {
       }
       ctx.session.productData.title = text;
       await ctx.replyWithHTML(
-        '<b>📝 2/7 — Tavsif</b>\n\nAkkaunt haqida batafsil yozing (obunachilar, yosh, geografiya, ' +
+        '<b>2. Tavsif</b>\n\nAkkaunt haqida batafsil yozing (obunachilar, yosh, geografiya, ' +
           'nima uchun sotilyapti):'
       );
       return ctx.wizard.next();
@@ -543,7 +549,7 @@ export function createSellerWizard() {
       }
       ctx.session.productData.description = text.slice(0, 4000);
       await ctx.replyWithHTML(
-        `<b>📝 3/7 — Narx</b>\n\nNarxni so‘mda kiriting (faqat raqam, masalan: 250000):`
+        `<b>3. Narx</b>\n\nNarxni so‘mda kiriting (faqat raqam, masalan: 250000):`
       );
       return ctx.wizard.next();
     },
@@ -551,9 +557,10 @@ export function createSellerWizard() {
     async (ctx: any) => {
       if (await bailIfCancelled(ctx, ['productData'])) return;
 
-      const price = parseInt(String(ctx.message?.text || '').replace(/\D/g, ''), 10);
-      if (isNaN(price) || price < 1000) {
-        await ctx.reply('Minimal narx 1 000 UZS. Qaytadan kiriting:');
+      const rawPrice = String(ctx.message?.text || '').trim();
+      const price = /^\d[\d\s]*$/.test(rawPrice) ? Number(rawPrice.replace(/\s/g, '')) : NaN;
+      if (!Number.isSafeInteger(price) || price < 1000 || price > 1_000_000_000) {
+        await ctx.reply('Narx 1 000–1 000 000 000 so‘m orasida bo‘lsin. Faqat butun raqam kiriting:');
         return;
       }
 
@@ -564,7 +571,7 @@ export function createSellerWizard() {
       };
 
       await ctx.replyWithHTML(
-        `<b>📝 4/7 — Kategoriya</b>\n\n` +
+        `<b>4. Kategoriya</b>\n\n` +
           `<i>Bu narxda siz olasiz: ${formatUzs(sellerPayout)} (komissiya ${formatUzs(commission)})</i>\n\n` +
           `Kategoriyani tanlang:`,
         {
@@ -588,7 +595,7 @@ export function createSellerWizard() {
       }
       ctx.session.productData.category = text;
       await ctx.replyWithHTML(
-        `<b>📝 5/7 — Login</b>\n\n🔐 Akkaunt login (email yoki username) ni kiriting:\n\n` +
+        `<b>5. Login</b>\n\n🔐 Akkaunt login (email yoki username) ni kiriting:\n\n` +
           `<i>Bu ma’lumot shifrlangan holda saqlanadi va faqat to‘lov tasdiqlangach ` +
           `xaridorga ochiladi.</i>`,
         backButton()
@@ -605,7 +612,7 @@ export function createSellerWizard() {
         return;
       }
       ctx.session.productData.login = text;
-      await ctx.reply('🔐 6/7 — Parolni kiriting:');
+      await ctx.reply('6. Parolni kiriting:');
       return ctx.wizard.next();
     },
 
@@ -618,7 +625,7 @@ export function createSellerWizard() {
         return;
       }
       ctx.session.productData.password = text;
-      await ctx.reply('🔐 7/7 — Tiklash kodi / qo‘shimcha ma’lumot (bo‘lmasa "yo‘q" deb yozing):');
+      await ctx.reply('7. Tiklash kodi / qo‘shimcha ma’lumot (bo‘lmasa "yo‘q" deb yozing):');
       return ctx.wizard.next();
     },
 
@@ -636,13 +643,36 @@ export function createSellerWizard() {
     },
 
     // Photo collection (optional, up to config.maxProductImages)
-    makePhotoStep('productData', renderProductReview),
+    makePhotoStep('productData', async ctx => {
+      await ctx.replyWithHTML('<b>To‘lov kartangiz</b>\n\nSavdodan tushgan pulni yechish uchun 16 xonali karta raqamingizni kiriting. Karta xaridorlarga ko‘rsatilmaydi.');
+      return ctx.wizard.next();
+    }),
+    async (ctx: any) => {
+      if (await bailIfCancelled(ctx, ['productData'])) return;
+      const raw = ctx.message?.text?.trim() || '';
+      if (!/^[\d\s]+$/.test(raw) || !isValidUzCard(raw)) return ctx.reply('16 xonali karta raqamini kiriting. Masalan: 8600 1234 5678 9012.');
+      ctx.session.productData.cardEncrypted = encryptSecret(raw.replace(/\s/g, ''));
+      ctx.session.productData.cardMasked = maskCard(raw);
+      await ctx.deleteMessage().catch(() => undefined);
+      await ctx.replyWithHTML('<b>Karta egasi</b>\n\nKartadagi ism va familiyani kiriting. Masalan: Ali Valiyev.');
+      return ctx.wizard.next();
+    },
+    async (ctx: any) => {
+      if (await bailIfCancelled(ctx, ['productData'])) return;
+      const holder = ctx.message?.text?.trim().replace(/\s+/g, ' ');
+      if (!holder || holder.length > 80 || holder.split(' ').length < 2 || !/^[\p{L}\p{M} ’‘'ʼ-]+$/u.test(holder)) return ctx.reply('Karta egasining ism va familiyasini to‘liq kiriting.');
+      ctx.session.productData.cardHolder = holder;
+      return renderProductReview(ctx);
+    },
 
     // Review confirm/cancel
     async (ctx: any) => {
       const action = ctx.callbackQuery?.data;
 
-      if (action !== 'seller_publish_confirm') {
+      if (await bailIfCancelled(ctx, ['productData'])) return;
+      if (!['seller_publish_confirm', 'seller_publish_cancel'].includes(action)) return ctx.reply('Quyidagi tasdiqlash yoki bekor qilish tugmasini bosing.');
+      if (action === 'seller_publish_cancel') {
+        ctx.session.productData = {};
         await ctx.answerCbQuery?.('Bekor qilindi');
         await ctx.reply('E’lon yaratish bekor qilindi.', sellerMenuKeyboard);
         return ctx.scene.leave();
@@ -655,24 +685,34 @@ export function createSellerWizard() {
       }
 
       const data = ctx.session.productData;
-      const product = await botApi.createProduct({ sellerId: user._id.toString(), ...data });
+      await ctx.answerCbQuery('E’lon saqlanmoqda…');
+      if (!data.cardEncrypted || !data.cardHolder) return ctx.reply('Karta ma’lumotlari topilmadi. /cancel orqali chiqib, e’lonni qayta yarating.');
+      let product;
+      try {
+        await payoutService.setPayoutCard(String(user._id), decryptSecret(data.cardEncrypted), data.cardHolder);
+        product = await botApi.createProduct({ sellerId: user._id.toString(), ...data });
+      } catch (error) {
+        await ctx.reply(describeError(error) + ' Ma’lumotlar saqlanib turibdi. Tasdiqlashni qayta bosing yoki /cancel yozing.');
+        return;
+      }
 
       // Clear the plaintext credentials out of the session as soon as they're persisted —
       // no reason to leave a live password sitting in a session document.
       ctx.session.productData = {};
+      await ctx.scene.leave();
 
-      await ctx.answerCbQuery('Yuborildi');
       await ctx.replyWithHTML(
-        `✅ <b>E’lon moderatorga yuborildi!</b>\n\n` +
-          `Tasdiqlangach katalogda paydo bo‘ladi va sizga xabar keladi.`,
+        `✅ <b>E’lon katalogda!</b>\n\n${escapeHtml(product.title)}\n` +
+          `ID: <code>${product.listingCode}</code>\nNarx: ${formatUzs(product.price)}\n\n` +
+          `Xaridor shu ID’ni botga yuborib e’lonni ochishi mumkin. E’lonni “E’lonlarim” bo‘limida bekor qilasiz.`,
         sellerMenuKeyboard
       );
 
       await notificationService.notifyAdmin(
-        `🆕 <b>Yangi e’lon ko‘rikda</b>\n\n` +
+        `🆕 <b>Yangi e’lon katalogda</b>\n\n` +
           `${escapeHtml(product.title)}\n${formatUzs(product.price)}\n` +
           `Sotuvchi: @${escapeHtml(user.username || String(user.telegramId))} (${user.trustLevel})\n\n` +
-          `<i>“🛡 Moderatsiya” bo‘limida ko‘ring.</i>`
+          `<i>E’lon katalogda chop etildi.</i>`
       );
 
       return ctx.scene.leave();

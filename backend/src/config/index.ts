@@ -157,7 +157,7 @@ export const config = {
   // Hard cap on how many photos a single product/deal can carry.
   maxProductImages: num('MAX_PRODUCT_IMAGES', 8),
 
-  siteUrl: process.env.SITE_URL || 'https://bitmax.uz',
+  siteUrl: process.env.SITE_URL || 'https://web-three-eosin-46.vercel.app',
   botUsername: process.env.BOT_USERNAME || 'bitmax_bot',
   supportUsername: process.env.SUPPORT_USERNAME || 'bitmax_admin',
 
