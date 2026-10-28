@@ -39,7 +39,7 @@ function photoStepPrompt(count: number): string {
     `<b>📷 Mahsulot rasmlari</b>`,
     '',
     `Rasmlarni bittalab yuboring (ixtiyoriy, jami ${config.maxProductImages} tagacha).`,
-    `Tugatgach “✅ Tayyor” tugmasini bosing.`,
+    `Tugatgach “Tayyor” tugmasini bosing.`,
     '',
     count > 0 ? `<i>Qo‘shildi: ${count}/${config.maxProductImages}</i>` : `<i>Hali rasm yo‘q.</i>`,
   ].join('\n');
@@ -96,7 +96,7 @@ function makePhotoStep(sessionKey: 'productData' | 'dealData', onFinish: (ctx: a
   };
 }
 
-sellerHandler.hears(['💼 Akkaunt sotish', '➕ Yangi e’lon'], async (ctx) => {
+sellerHandler.hears(["💼 Akkaunt sotish","Akkaunt sotish","➕ Yangi e’lon","Yangi e’lon"], async (ctx) => {
   const user = await User.findOne({ telegramId: ctx.from!.id });
   if (!user) return;
 
@@ -134,7 +134,7 @@ sellerHandler.hears(['💼 Akkaunt sotish', '➕ Yangi e’lon'], async (ctx) =>
  * The escrow-only path, shown as its own menu entry because it is a different job from
  * listing on the marketplace: the two people already agreed, they just want a guarantor.
  */
-sellerHandler.hears(['🤝 Kafil bitim (escrow)', '🤝 Kafil bitim'], async (ctx) => {
+sellerHandler.hears(["🤝 Kafil bitim (escrow)","Kafil bitim (escrow)","🤝 Kafil bitim","Kafil bitim"], async (ctx) => {
   const user = await User.findOne({ telegramId: ctx.from!.id });
   if (!user || user.isBlocked) return;
 
@@ -189,7 +189,7 @@ sellerHandler.action(/^deal_cancel_(.+)$/, async (ctx) => {
   await ctx.answerCbQuery('Bekor qilindi');
 });
 
-sellerHandler.hears(['📋 E’lonlarim', '📋 Mening e’lonlarim'], async (ctx) => {
+sellerHandler.hears(["📋 E’lonlarim","E’lonlarim","📋 Mening e’lonlarim","Mening e’lonlarim"], async (ctx) => {
   const user = await User.findOne({ telegramId: ctx.from!.id });
   if (!user) return;
 
@@ -229,7 +229,7 @@ sellerHandler.hears(['📋 E’lonlarim', '📋 Mening e’lonlarim'], async (ct
   await ctx.replyWithHTML([`<b>📋 Mening e’lonlarim (${products.length})</b>`, '', ...lines].join('\n'));
 });
 
-sellerHandler.hears('📊 Statistika', async (ctx) => {
+sellerHandler.hears(["📊 Statistika","Statistika"], async (ctx) => {
   const user = await User.findOne({ telegramId: ctx.from!.id });
   if (!user || user.role === 'admin') return; // admin has its own stats screen
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/components/Icon";
 import { useState } from "react";
 import { api } from "@/lib/cabinet";
 import { formatUzs } from "@/lib/api";
@@ -135,7 +136,7 @@ export function WalletView() {
       {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
 
       <div className="surface p-5 sm:p-6">
-        <h2 className="font-semibold text-ink">💳 Pul yechish kartasi</h2>
+        <h2 className="font-semibold text-ink"><Icon name="wallet" className="mr-2 inline-block align-text-bottom" /> Pul yechish kartasi</h2>
 
         {data.card && !editingCard ? (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -219,7 +220,7 @@ export function WalletView() {
       </div>
 
       <div className="surface p-5 sm:p-6">
-        <h2 className="font-semibold text-ink">💸 Pul yechish</h2>
+        <h2 className="font-semibold text-ink"><Icon name="arrow" className="mr-2 inline-block align-text-bottom" /> Pul yechish</h2>
         <p className="mt-1 text-xs text-faint">
           Minimal {formatUzs(data.minPayout)}
           {data.payoutFee > 0 &&

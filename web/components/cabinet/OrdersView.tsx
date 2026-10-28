@@ -31,9 +31,6 @@ export function OrdersView() {
 
   const allOrders = data?.orders ?? [];
   const allPending = data?.pending ?? [];
-  const active = allOrders.filter(
-    (o) => o.status === "holding" || o.status === "disputed",
-  );
   const orders = allOrders.filter((o) =>
     tab === "active"
       ? ["holding", "disputed"].includes(o.status)
@@ -54,24 +51,6 @@ export function OrdersView() {
           To‘lovdan tekshirishgacha — har bir qadam shu yerda.
         </p>
       </div>
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {[
-          [active.length, "Faol buyurtma"],
-          [
-            allPending.filter((p) => p.status === "pending_payment").length,
-            "To‘lov kutilmoqda",
-          ],
-          [
-            formatUzs(active.reduce((n, o) => n + o.amount, 0)),
-            "Kafildagi mablag‘",
-          ],
-        ].map(([value, label]) => (
-          <div key={label} className="surface p-4">
-            <dt className="text-xs text-muted">{label}</dt>
-            <dd className="tnum mt-2 text-xl font-bold">{value}</dd>
-          </div>
-        ))}
-      </dl>
       <div className="flex gap-2 border-b border-line pb-3">
         {(["active", "history"] as const).map((t) => (
           <button
@@ -170,8 +149,9 @@ export function OrdersView() {
                     <p className="truncate font-medium text-ink">
                       {order.title}
                     </p>
-                    <p className="mt-0.5 text-xs text-faint">
-                      {timeAgo(order.boughtAt)}
+                    <p className="mt-0.5 text-xs text-faint">{timeAgo(order.boughtAt)}</p>
+                    <p className="mt-2 text-sm font-medium text-accent">
+                      {order.status === 'holding' ? order.revealedAt ? 'Tekshiring va qaror qiling →' : 'Akkaunt ma’lumotlarini oching →' : 'Buyurtmani ko‘rish →'}
                     </p>
                   </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/components/Icon";
 import Link from "next/link";
 import { useState } from "react";
 import { Credentials, RefundQuote, api } from "@/lib/cabinet";
@@ -136,7 +137,7 @@ export function OrderView({ orderId }: { orderId: string }) {
 
       {holding && !credentials && (
         <div className="surface p-5 sm:p-6">
-          <h2 className="font-semibold text-ink">🔑 Akkaunt ma’lumotlari</h2>
+          <h2 className="font-semibold text-ink"><Icon name="key" className="mr-2 inline-block align-text-bottom" /> Akkaunt ma’lumotlari</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted">
             {order.revealedAt
               ? "Ma’lumotlar allaqachon ochilgan. Ularni qayta ko‘rsatish muddatni o‘zgartirmaydi."
@@ -156,7 +157,7 @@ export function OrderView({ orderId }: { orderId: string }) {
 
       {credentials && (
         <div className="surface border-accent/40 p-5 sm:p-6">
-          <h2 className="font-semibold text-ink">🔑 Akkaunt ma’lumotlari</h2>
+          <h2 className="font-semibold text-ink"><Icon name="key" className="mr-2 inline-block align-text-bottom" /> Akkaunt ma’lumotlari</h2>
           <dl className="mt-4 space-y-2.5">
             <Secret label="Login" value={credentials.login} />
             <Secret label="Parol" value={credentials.password} />
@@ -219,7 +220,7 @@ export function OrderView({ orderId }: { orderId: string }) {
                   disabled={!order.revealedAt || busy !== null}
                   className="btn-accent flex-1"
                 >
-                  ✅ Tasdiqlayman
+                  <Icon name="check" /> Tasdiqlayman
                 </SubmitButton>
                 <button
                   type="button"
@@ -230,7 +231,7 @@ export function OrderView({ orderId }: { orderId: string }) {
                   className="btn-ghost flex-1"
                   disabled={busy !== null}
                 >
-                  🔄 Qaytarish
+                  <Icon name="refresh" /> Qaytarish
                 </button>
               </div>
               <p className="mt-3 text-xs leading-relaxed text-faint">
@@ -309,7 +310,7 @@ export function OrderView({ orderId }: { orderId: string }) {
 
       {order.rated && (
         <Notice tone="info">
-          Sizning bahoyingiz: {"⭐".repeat(order.rating || 0)}
+          Sizning bahoyingiz: {order.rating || 0} / 5
         </Notice>
       )}
     </div>
@@ -451,9 +452,9 @@ function RatingBox({
             disabled={busy}
             onClick={() => onRate(value)}
             aria-label={`${value} yulduz`}
-            className="rounded-md px-2 py-1 text-2xl leading-none transition hover:scale-110 disabled:opacity-50"
+            className="min-h-[44px] min-w-[44px] rounded-md px-2 py-1 text-2xl leading-none transition hover:scale-110 disabled:opacity-50"
           >
-            ⭐
+            <Icon name="star" width={28} height={28} fill="currentColor" />
           </button>
         ))}
       </div>

@@ -30,7 +30,7 @@ export function MobileNav({ authed = false }: { authed?: boolean }) {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Menyuni yopish' : 'Menyuni ochish'}
         aria-expanded={open}
-        className="rounded-lg border border-line p-2 text-muted transition hover:bg-raised hover:text-ink"
+        className="rounded-lg border border-line min-h-[44px] min-w-[44px] p-2 text-muted transition hover:bg-raised hover:text-ink"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           {open ? (
@@ -73,6 +73,9 @@ export function MobileNav({ authed = false }: { authed?: boolean }) {
             className="block px-4 py-2.5 text-sm text-ink hover:bg-raised"
           >
             {authed ? 'Kabinet' : 'Kirish'}
+          </Link>
+          <Link href="/kabinet/yangi" onClick={() => setOpen(false)} className="block px-4 py-3 text-sm font-semibold text-accent hover:bg-raised">
+            E’lon berish
           </Link>
           <a
             href={botLink()}

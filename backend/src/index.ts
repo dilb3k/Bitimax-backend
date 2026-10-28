@@ -13,6 +13,7 @@ import transactionRoutes from './routes/transactions';
 import escrowRoutes from './routes/escrow';
 import authRoutes from './routes/auth';
 import meRoutes from './routes/me';
+import { healthRoutes } from './routes/health';
 
 const app = express();
 
@@ -32,6 +33,8 @@ app.use(express.json({ limit: '100kb' }));
 
 app.post('/api/telegram/webhook', telegramWebhook);
 
+app.use(healthRoutes);
+
 // Generous global limiter as a DoS backstop; individual routes tighten this further.
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -41,9 +44,6 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'bitmax-api', version: '1.0.0' });
-});
 
 app.use('/api', smsWebhookRoutes);
 app.use('/api/auth', authRoutes);

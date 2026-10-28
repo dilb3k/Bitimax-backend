@@ -4,105 +4,25 @@ import { Icon } from "./Icon";
 
 export function Hero({ stats }: { stats: PlatformStats | null }) {
   return (
-    <section className="relative overflow-hidden border-b border-line bg-surface">
-      <div className="absolute inset-0 hero-grid" aria-hidden="true" />
-      <div className="relative mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-20">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
-          <div>
-            <p className="eyebrow">
-              <span className="h-2 w-2 rounded-full bg-accent" /> RAQAMLI BOZOR
-              · KAFIL XIZMATI
-            </p>
-            <h1 className="mt-6 max-w-[13ch] text-5xl font-extrabold leading-[1.06] sm:text-6xl lg:text-[68px]">
-              Kelishuv sizdan.
-              <br />
-              <span className="text-accent">Kafillik bizdan.</span>
-            </h1>
-            <p className="mt-6 max-w-md text-base leading-7 text-muted">
-              Akkaunt sotib oling, soting yoki tayyor kelishuvni kod bilan
-              oching. To‘lov, tekshirish va bitim holati — barchasi bir joyda.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#katalog" className="btn-accent">
-                Katalogni ko‘rish <Icon name="arrow" />
-              </a>
-              <Link href="/kabinet/yangi" className="btn-ghost">
-                <Icon name="plus" /> E’lon berish
-              </Link>
-            </div>
-            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted">
-              <span className="flex items-center gap-1.5">
-                <Icon name="shield" width={16} /> To‘lov kafilda
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Icon name="check" width={16} /> Web va Telegram’da
-              </span>
-            </div>
-          </div>
-          <div className="relative rounded-[28px] bg-[#0d2234] p-6 text-white shadow-xl sm:p-8">
-            <div className="flex items-center justify-between border-b border-white/15 pb-5">
-              <span className="text-sm font-semibold">
-                Bitim qanday ishlaydi?
-              </span>
-              <Icon
-                name="shield"
-                className="text-cyan-300"
-                width={26}
-                height={26}
-              />
-            </div>
-            <ol className="mt-7 space-y-7">
-              {[
-                [
-                  "01",
-                  "Tanlang va to‘lang",
-                  "Katalogdagi e’lon yoki sotuvchi bergan kod orqali.",
-                ],
-                [
-                  "02",
-                  "Akkauntni tekshiring",
-                  "To‘lovdan so‘ng ma’lumotlar sizga ochiladi.",
-                ],
-                [
-                  "03",
-                  "Bitimni yakunlang",
-                  "Tasdiqlang yoki shartlar bo‘yicha qaytarish so‘rang.",
-                ],
-              ].map(([n, title, text]) => (
-                <li key={n} className="flex gap-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-300/10 font-mono text-sm text-cyan-200">
-                    {n}
-                  </span>
-                  <div>
-                    <h2 className="text-base font-semibold">{title}</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-300">
-                      {text}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <p className="mt-7 rounded-xl bg-white/5 p-4 text-xs leading-5 text-slate-300">
-              Tekshirish muddati va avtomatik yakunlash vaqti buyurtmangizda
-              ko‘rsatiladi.
-            </p>
-          </div>
+    <section className="border-b border-line bg-surface">
+      <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
+        <p className="eyebrow"><Icon name="shield" width={18} /> BITMAX · KAFIL XIZMATI</p>
+        <h1 className="mt-4 max-w-2xl text-3xl font-bold leading-tight sm:text-5xl">Akkaunt sotib oling yoki soting.</h1>
+        <p className="mt-4 max-w-xl text-base leading-7 text-muted">Pul tekshirish vaqtida kafilda saqlanadi. Bitim tasdiqlanganda yoki tekshirish muddati tugaganda sotuvchiga o‘tadi.</p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <a href="#katalog" className="btn-accent"><Icon name="bag" /> Sotib olish</a>
+          <Link href="/kabinet/yangi" className="btn-ghost"><Icon name="plus" /> E’lon berish</Link>
+          <Link href="/kod" className="btn-ghost"><Icon name="code" /> Kodim bor</Link>
         </div>
-        {stats && (
-          <dl className="mt-12 grid grid-cols-2 gap-5 border-t border-line pt-7 sm:mt-16 sm:grid-cols-4">
-            {[
-              [stats.active, "Faol e’lon"],
-              [stats.sold, "Sotilgan mahsulot"],
-              [stats.sellers, "Sotuvchi"],
-              [stats.commission + "%", "Platforma komissiyasi"],
-            ].map(([value, label]) => (
-              <div key={label}>
-                <dt className="text-xs text-muted">{label}</dt>
-                <dd className="tnum mt-1 text-2xl font-bold">{value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
+        <details className="mt-5 max-w-2xl text-sm text-muted">
+          <summary className="cursor-pointer py-2 font-medium text-ink">Savdo qanday ishlaydi?</summary>
+          <ol className="mt-3 grid gap-3 sm:grid-cols-3">
+            <li><strong className="block text-ink">1. Tanlang va to‘lang</strong>Katalogdan yoki sotuvchi bergan kod bilan.</li>
+            <li><strong className="block text-ink">2. Akkauntni tekshiring</strong>To‘lovdan keyin login va parolni oching.</li>
+            <li><strong className="block text-ink">3. Tasdiqlang</strong>Muammo bo‘lsa, muddat ichida qaytarishni so‘rang.</li>
+          </ol>
+          <p className="mt-3">Muddat va qaytarish shartlari buyurtmada ko‘rsatiladi.{stats && ` Platforma komissiyasi: ${stats.commission}%.`} <a href="#shartlar" className="text-accent underline">Shartlarni ko‘rish</a></p>
+        </details>
       </div>
     </section>
   );

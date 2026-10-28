@@ -60,8 +60,8 @@ export function CabinetNav() {
           );
         })}
       </nav>
-      <div className="flex items-center justify-between gap-3 lg:mt-5 lg:flex-col lg:items-stretch">
-        <Link href="/kabinet/yangi" className="btn-accent text-sm">
+      <div className="flex justify-end lg:mt-5 lg:flex-col lg:gap-3 lg:items-stretch">
+        <Link href="/kabinet/yangi" className="btn-accent hidden text-sm lg:inline-flex">
           <Icon name="plus" width={18} /> E’lon berish
         </Link>
         <button

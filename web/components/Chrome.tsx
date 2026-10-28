@@ -41,7 +41,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-ground/85 backdrop-blur-md">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface focus:p-3">Asosiy qismga o‘tish</a>
-      <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           <Logo priority />
           <span className="hidden text-xs text-faint sm:inline">Raqamli bozor</span>
@@ -56,7 +56,7 @@ export function Header() {
           </Link>
           <Link href="/kabinet/yangi" className="hidden items-center gap-1 px-3 py-2 text-sm font-semibold text-accent lg:flex">+ E’lon berish</Link>
           <ThemeToggle />
-          <Link href={user ? '/kabinet' : '/kirish'} className="hidden btn-accent px-3.5 py-2 text-sm sm:inline-flex">
+          <Link href={user ? '/kabinet' : '/kirish'} className="btn-accent px-3.5 py-2 text-sm">
             {user ? 'Kabinet' : 'Kirish'}
           </Link>
           <MobileNav authed={Boolean(user)} />
@@ -91,7 +91,7 @@ function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={dark ? 'Yorug‘ rejimga o‘tish' : 'Qorong‘i rejimga o‘tish'}
-      className="rounded-lg border border-line p-2 text-muted transition hover:bg-raised hover:text-ink"
+      className="rounded-lg border border-line min-h-[44px] min-w-[44px] p-2 text-muted transition hover:bg-raised hover:text-ink"
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         {dark ? (

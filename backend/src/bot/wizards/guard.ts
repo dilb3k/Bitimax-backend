@@ -4,7 +4,7 @@ import { mainMenuKeyboard } from '../keyboards';
  * Matches the same "leave the wizard" input `CODE_WIZARD` already recognized (buyer.ts) —
  * the reply-keyboard "🏠 Asosiy menu" button, or typing "bekor"/"/cancel".
  */
-const CANCEL_PATTERN = /^(🏠|bekor|\/cancel)/i;
+const CANCEL_PATTERN = /^(?:🏠(?: Asosiy menu)?|Asosiy menu|bekor|\/cancel)$/i;
 
 /**
  * A `Scenes.WizardScene` step swallows every update while it's active — including presses of

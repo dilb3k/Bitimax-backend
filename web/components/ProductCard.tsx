@@ -1,3 +1,4 @@
+import { Icon } from "@/components/Icon";
 import Image from "next/image";
 import Link from "next/link";
 import { Product, TRUST_LABEL, formatUzs, timeAgo } from "@/lib/api";
@@ -64,7 +65,7 @@ export function ProductCard({ product }: { product: Product }) {
       </p>
 
       {seller && (
-        <div className="mb-4 flex items-center gap-2 text-xs">
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
           <span
             className={`font-medium ${TRUST_STYLE[seller.trustLevel] ?? "text-faint"}`}
           >
@@ -74,7 +75,7 @@ export function ProductCard({ product }: { product: Product }) {
             <>
               <span className="text-faint">·</span>
               <span className="tnum text-muted">
-                ★ {seller.rating.toFixed(1)}{" "}
+                <span className="sr-only">Sotuvchi bahosi: </span><Icon name="star" width={14} height={14} className="mr-1 inline-block align-text-bottom" />{seller.rating.toFixed(1)}{" "}
                 <span className="text-faint">({seller.ratingCount})</span>
               </span>
             </>

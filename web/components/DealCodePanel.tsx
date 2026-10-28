@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from "@/components/Icon";
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { api, ApiError } from '@/lib/cabinet';
@@ -75,14 +76,14 @@ export function DealCodePanel() {
             Sotuvchi: @{deal.seller.username || 'noma’lum'}{' '}
             <span className="text-faint">
               {deal.seller.rating !== null
-                ? `· ★ ${deal.seller.rating.toFixed(1)} (${deal.seller.ratingCount})`
+                ? `· Baho: ${deal.seller.rating.toFixed(1)}/5 (${deal.seller.ratingCount})`
                 : '· yangi sotuvchi'}
             </span>
           </p>
         )}
 
         <div className="mt-5 rounded-lg bg-raised p-4 text-sm leading-relaxed text-muted">
-          🛡 Pulingiz sotuvchiga darhol o‘tmaydi. Avval akkauntni tekshirasiz, keyin
+          <Icon name="shield" className="mr-1 inline-block align-text-bottom" /> Pulingiz sotuvchiga darhol o‘tmaydi. Avval akkauntni tekshirasiz, keyin
           tasdiqlaysiz. Muammo bo‘lsa — siyosat bo‘yicha qaytariladi.
           {policy && <span className="mt-2 block whitespace-pre-line text-xs text-faint">{policy}</span>}
         </div>

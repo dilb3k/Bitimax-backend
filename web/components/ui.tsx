@@ -82,8 +82,8 @@ export function Notice({ tone, children }: { tone: 'ok' | 'warn' | 'info'; child
 
 export function Badge({ tone, children }: { tone: 'ok' | 'warn' | 'accent' | 'muted'; children: React.ReactNode }) {
   const styles = {
-    ok: 'bg-ok/12 text-ok',
-    warn: 'bg-warn/12 text-warn',
+    ok: 'bg-ok/10 text-ok',
+    warn: 'bg-warn/10 text-warn',
     accent: 'bg-accent-soft text-ink',
     muted: 'bg-raised text-muted',
   }[tone];
@@ -175,14 +175,16 @@ export function Countdown({ to, onDone }: { to: string; onDone?: () => void }) {
 /** Copy-to-clipboard control for card numbers, amounts and deal codes. */
 export function CopyButton({ value, label = 'Nusxa olish' }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(false);
 
   async function copy() {
+    setCopyError(false);
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     } catch {
-      // Clipboard is permission-gated; the value is on screen to select by hand anyway.
+      setCopyError(true);
     }
   }
 
@@ -190,10 +192,10 @@ export function CopyButton({ value, label = 'Nusxa olish' }: { value: string; la
     <button
       type="button"
       onClick={copy}
-      className="rounded-md border border-line px-2.5 py-1.5 text-xs text-muted transition hover:bg-raised hover:text-ink"
+      className="min-h-[44px] rounded-md border border-line px-2.5 py-1.5 text-xs text-muted transition hover:bg-raised hover:text-ink"
       aria-label={label}
     >
-      {copied ? 'Nusxa olindi' : label}
+      <span aria-live="polite">{copyError ? 'Nusxalanmadi — matnni belgilang' : copied ? 'Nusxa olindi' : label}</span>
     </button>
   );
 }

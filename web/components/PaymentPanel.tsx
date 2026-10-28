@@ -76,7 +76,7 @@ export function PaymentPanel({ transactionId }: { transactionId: string }) {
     return (
       <div className="surface p-6 text-center sm:p-8">
         <p className="text-3xl" aria-hidden="true">
-          ✅
+          <Icon name="check" width={32} height={32} className="mx-auto text-ok" />
         </p>
         <h2 className="mt-3 text-xl font-bold text-ink">To‘lov tasdiqlandi</h2>
         <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">

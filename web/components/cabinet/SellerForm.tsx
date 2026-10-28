@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from "@/components/Icon";
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/cabinet';
@@ -47,7 +48,7 @@ export function SellerForm({ mode }: { mode: Mode }) {
   if (loadError || !data) return <ErrorState message={loadError || 'Yuklab bo‘lmadi'} onRetry={reload} />;
 
   const policy = data.policy;
-  const priceValue = parseInt(price.replace(/\D/g, ''), 10) || 0;
+  const priceValue = Number(price) || 0;
   const commission = Math.round((priceValue * policy.commission) / 100);
 
   async function submit(event: React.FormEvent) {
@@ -94,7 +95,7 @@ export function SellerForm({ mode }: { mode: Mode }) {
   if (deal) {
     return (
       <div className="surface p-6 sm:p-8">
-        <h2 className="text-xl font-bold text-ink">✅ Bitim tayyor</h2>
+        <h2 className="text-xl font-bold text-ink"><Icon name="check" className="mr-2 inline-block align-text-bottom text-ok" /> Bitim tayyor</h2>
         <p className="mt-1 text-sm text-muted">{deal.title}</p>
 
         <div className="mt-5 rounded-lg border border-line bg-raised p-4 text-center">
@@ -138,7 +139,7 @@ export function SellerForm({ mode }: { mode: Mode }) {
     return (
       <div className="surface p-6 text-center sm:p-8">
         <p className="text-3xl" aria-hidden="true">
-          🕐
+          <Icon name="clock" width={32} height={32} className="mx-auto text-accent" />
         </p>
         <h2 className="mt-3 text-xl font-bold text-ink">E’lon moderatorga yuborildi</h2>
         <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
@@ -157,12 +158,14 @@ export function SellerForm({ mode }: { mode: Mode }) {
   return (
     <form onSubmit={submit} className="space-y-5">
       <div className="surface space-y-4 p-5 sm:p-6">
+        <h2 className="font-semibold">1. Mahsulot haqida</h2>
         <Field label="Nomi" hint={mode === 'deal' ? '3–120 belgi' : '5–120 belgi'}>
           <input
             className="field"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Instagram @mynick, 12k obunachi"
+            minLength={mode === 'deal' ? 3 : 5}
             maxLength={120}
             required
           />
@@ -174,6 +177,7 @@ export function SellerForm({ mode }: { mode: Mode }) {
               className="field min-h-[120px] resize-y"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
+              minLength={20}
               maxLength={4000}
               required
             />
@@ -183,9 +187,13 @@ export function SellerForm({ mode }: { mode: Mode }) {
         <Field label="Narx (so‘m)">
           <input
             className="field tnum"
+            type="number"
+            min={1000}
+            max={1000000000}
+            step={1}
             inputMode="numeric"
             value={price}
-            onChange={(event) => setPrice(event.target.value.replace(/\D/g, ''))}
+            onChange={(event) => setPrice(event.target.value)}
             placeholder="250000"
             required
           />
@@ -226,7 +234,7 @@ export function SellerForm({ mode }: { mode: Mode }) {
 
       <div className="surface space-y-4 p-5 sm:p-6">
         <div>
-          <h2 className="font-semibold text-ink">🔐 Akkaunt ma’lumotlari</h2>
+          <h2 className="font-semibold text-ink"><Icon name="key" className="mr-2 inline-block align-text-bottom" /> 2. Akkaunt ma’lumotlari</h2>
           <p className="mt-1 text-xs leading-relaxed text-muted">
             Shifrlangan holda saqlanadi va faqat to‘lov tasdiqlangandan keyin xaridorga ochiladi.
             Moderator ham ularni ko‘rmaydi.
@@ -280,7 +288,7 @@ export function SellerForm({ mode }: { mode: Mode }) {
 
       <div className="flex flex-col gap-2.5 sm:flex-row">
         <SubmitButton busy={busy} type="submit" className="btn-accent flex-1">
-          {mode === 'deal' ? 'Kodni yaratish' : 'Moderatsiyaga yuborish'}
+          {mode === 'deal' ? 'Kodni yaratish' : 'E’lonni yuborish'}
         </SubmitButton>
         <Link href="/kabinet/sotuv" className="btn-ghost flex-1 justify-center">
           Bekor qilish

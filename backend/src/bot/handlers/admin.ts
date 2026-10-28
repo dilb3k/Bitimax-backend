@@ -33,7 +33,7 @@ adminHandler.use(async (ctx, next) => {
   return next();
 });
 
-adminHandler.hears('👥 Foydalanuvchilar', async (ctx) => {
+adminHandler.hears(["👥 Foydalanuvchilar","Foydalanuvchilar"], async (ctx) => {
   if (!(await requireAdmin(ctx))) return;
 
   const [total, buyers, sellers, blocked, flagged] = await Promise.all([
@@ -217,7 +217,7 @@ export function createRoleWizard() {
   );
 }
 
-adminHandler.hears('📊 Statistika', async (ctx) => {
+adminHandler.hears(["📊 Statistika","Statistika"], async (ctx) => {
   if (!(await requireAdmin(ctx))) return;
 
   const [
@@ -282,7 +282,7 @@ adminHandler.hears('📊 Statistika', async (ctx) => {
 
 // ─── Moderation ────────────────────────────────────────────────────────────────
 
-adminHandler.hears('🛡 Moderatsiya', async (ctx) => {
+adminHandler.hears(["🛡 Moderatsiya","Moderatsiya"], async (ctx) => {
   if (!(await requireAdmin(ctx))) return;
 
   const queue = await Product.find({ status: 'pending_review' })
@@ -394,7 +394,7 @@ adminHandler.action(/^mod_reject_(.+)$/, async (ctx) => {
 
 // ─── Payouts ───────────────────────────────────────────────────────────────────
 
-adminHandler.hears('💸 To‘lov so‘rovlari', async (ctx) => {
+adminHandler.hears(["💸 To‘lov so‘rovlari","To‘lov so‘rovlari"], async (ctx) => {
   if (!(await requireAdmin(ctx))) return;
 
   const pending = await payoutService.listPending(10);
@@ -478,7 +478,7 @@ adminHandler.action(/^po_reject_(.+)$/, async (ctx) => {
 
 // ─── Payment inbox ─────────────────────────────────────────────────────────────
 
-adminHandler.hears('📥 To‘lov inbox', async (ctx) => {
+adminHandler.hears(["📥 To‘lov inbox","To‘lov inbox"], async (ctx) => {
   if (!(await requireAdmin(ctx))) return;
 
   const unmatched = await PaymentInbox.find({ status: 'unmatched' }).sort('receivedAt').limit(10);
@@ -532,7 +532,7 @@ adminHandler.action(/^inbox_(mute|unmute)_([a-f0-9]{24})$/, async (ctx) => {
 
 // ─── Disputes ──────────────────────────────────────────────────────────────────
 
-adminHandler.hears('⚖️ Nizolar', async (ctx) => {
+adminHandler.hears(["⚖️ Nizolar","Nizolar"], async (ctx) => {
   if (!(await requireAdmin(ctx))) return;
 
   const disputes = await Dispute.find({ status: { $in: ['open', 'under_review'] } })

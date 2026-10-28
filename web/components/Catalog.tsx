@@ -12,9 +12,9 @@ import {
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
 
 const SORTS = [
-  { value: '-createdAt', label: 'Yangi' },
-  { value: 'price', label: 'Arzon' },
-  { value: '-price', label: 'Qimmat' },
+  { value: '-createdAt', label: 'Yangilari' },
+  { value: 'price', label: 'Arzonidan' },
+  { value: '-price', label: 'Qimmatidan' },
 ];
 
 export function Catalog() {
@@ -166,7 +166,9 @@ export function Catalog() {
         </div>
       </div>
 
-      <div className="mb-5 flex flex-wrap items-center gap-2">
+      <details className="mb-5 rounded-xl border border-line bg-surface p-4" open={minPriceInput || maxPriceInput ? true : undefined}>
+        <summary className="cursor-pointer text-sm font-medium">Narx bo‘yicha saralash</summary>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <label className="text-sm text-muted" htmlFor="min-narx">
           Narx:
         </label>
@@ -176,7 +178,7 @@ export function Catalog() {
           inputMode="numeric"
           value={minPriceInput}
           onChange={(event) => setMinPriceInput(event.target.value)}
-          placeholder="min"
+          placeholder="Eng kam"
           className="field w-28 py-2 text-sm"
         />
         <span className="text-faint">—</span>
@@ -186,12 +188,13 @@ export function Catalog() {
           inputMode="numeric"
           value={maxPriceInput}
           onChange={(event) => setMaxPriceInput(event.target.value)}
-          placeholder="max"
+          placeholder="Eng ko‘p"
           className="field w-28 py-2 text-sm"
         />
         <span className="text-sm text-faint">so‘m</span>
       </div>
 
+      </details>
       <div className="mb-8 flex gap-2 overflow-x-auto pb-1">
         <button
           type="button"
@@ -215,6 +218,8 @@ export function Catalog() {
         ))}
       </div>
 
+      {(searchInput || category || minPriceInput || maxPriceInput) && <button type="button" className="btn-ghost mb-5 text-sm" onClick={() => { setSearchInput(''); setCategory(''); setMinPriceInput(''); setMaxPriceInput(''); setPage(1); }}>Filtrlarni tozalash</button>}
+      {minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice && <p role="status" className="mb-4 text-sm text-warn">Eng kam narx eng ko‘p narxdan katta bo‘lmasin.</p>}
       {error ? (
         <div className="surface p-10 text-center">
           <p className="text-ink">{error}</p>

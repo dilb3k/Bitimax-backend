@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from "@/components/Icon";
 import { useEffect } from 'react';
 
 /**
@@ -15,7 +16,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   return (
     <main id="main-content" className="mx-auto flex max-w-lg flex-col items-center px-5 py-20 text-center sm:px-8">
       <p className="text-4xl" aria-hidden="true">
-        ⚠️
+        <Icon name="alert" width={32} height={32} className="mx-auto text-warn" />
       </p>
       <h1 className="mt-4 text-2xl font-bold text-ink">Nimadir noto‘g‘ri ketdi</h1>
       <p className="mt-2 text-sm leading-relaxed text-muted">

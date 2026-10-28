@@ -1,3 +1,4 @@
+import { Icon } from "@/components/Icon";
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -67,7 +68,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
               <h1 className="text-2xl font-bold leading-snug text-ink sm:text-3xl">{product.title}</h1>
 
               {seller && (
-                <div className="mt-3 flex items-center gap-2 text-sm">
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
                   <span className={`font-medium ${TRUST_STYLE[seller.trustLevel] ?? 'text-faint'}`}>
                     {TRUST_LABEL[seller.trustLevel]}
                   </span>
@@ -75,7 +76,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
                     <>
                       <span className="text-faint">·</span>
                       <span className="tnum text-muted">
-                        ★ {seller.rating.toFixed(1)} <span className="text-faint">({seller.ratingCount})</span>
+                        <span className="sr-only">Sotuvchi bahosi: </span><Icon name="star" width={14} height={14} className="mr-1 inline-block align-text-bottom" />{seller.rating.toFixed(1)} <span className="text-faint">({seller.ratingCount})</span>
                       </span>
                     </>
                   )}

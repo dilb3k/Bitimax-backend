@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from "@/components/Icon";
 import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/cabinet';
@@ -8,7 +9,7 @@ import { Badge, CopyButton, EmptyState, ErrorState, Loading, Notice, SubmitButto
 
 const STATUS_LABEL: Record<string, string> = {
   draft: 'Qoralama',
-  pending_review: 'Moderatsiyada',
+  pending_review: 'Tekshirilmoqda',
   rejected: 'Rad etilgan',
   active: 'Faol',
   reserved: 'Band qilingan',
@@ -28,6 +29,7 @@ const STATUS_TONE: Record<string, 'ok' | 'warn' | 'accent' | 'muted'> = {
 };
 
 export function SellView() {
+  const [tab, setTab] = useState<'listings' | 'sales'>('listings');
   const listings = useAsync(() => api.listings());
   const sales = useAsync(() => api.sales());
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -51,16 +53,20 @@ export function SellView() {
       <div><p className="eyebrow">SOTUVCHI MAYDONI</p><h1 className="page-title mt-2">Sotuvlarim</h1><p className="mt-2 text-sm text-muted">E’lon joylang, shaxsiy bitim yarating va natijani kuzating.</p></div>
       <div className="flex flex-wrap gap-2.5">
         <Link href="/kabinet/yangi" className="btn-accent text-sm">
-          <span aria-hidden="true">＋</span> Yangi e’lon
+          <Icon name="plus" /> Yangi e’lon
         </Link>
         <Link href="/kabinet/bitim" className="btn-ghost text-sm">
-          <span aria-hidden="true">🤝</span> Kafil bitim
+          <Icon name="shield" /> Kod bilan bitim
         </Link>
       </div>
 
       {error && <Notice tone="warn">{error}</Notice>}
 
-      <section>
+      <div className="flex gap-2 border-b border-line pb-3" aria-label="Sotuv bo‘limlari">
+        <button type="button" className={`chip ${tab === 'listings' ? 'chip-on' : ''}`} aria-pressed={tab === 'listings'} onClick={() => setTab('listings')}>E’lonlarim</button>
+        <button type="button" className={`chip ${tab === 'sales' ? 'chip-on' : ''}`} aria-pressed={tab === 'sales'} onClick={() => setTab('sales')}>Sotilganlar</button>
+      </div>
+      <section hidden={tab !== 'listings'}>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-faint">E’lonlarim</h2>
 
         {listings.loading && <Loading />}
@@ -81,7 +87,7 @@ export function SellView() {
                   <p className="truncate font-medium text-ink">{listing.title}</p>
                   <p className="tnum mt-0.5 text-sm text-muted">{formatUzs(listing.price)}</p>
                   <p className="mt-1 text-xs text-faint">
-                    {listing.listingType === 'private' ? 'Kafil bitim' : listing.category} ·{' '}
+                    {listing.listingType === 'private' ? 'Kod bilan bitim' : listing.category} ·{' '}
                     {timeAgo(listing.createdAt)}
                     {listing.listingType === 'public' && ` · ${listing.viewCount} ko‘rish`}
                   </p>
@@ -131,7 +137,7 @@ export function SellView() {
         </ul>
       </section>
 
-      <section>
+      <section hidden={tab !== 'sales'}>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-faint">Sotuvlarim</h2>
 
         {sales.loading && <Loading />}
@@ -148,7 +154,7 @@ export function SellView() {
                 <p className="truncate font-medium text-ink">{sale.title}</p>
                 <p className="mt-0.5 text-xs text-faint">
                   {timeAgo(sale.boughtAt)}
-                  {sale.rating ? ` · ${'⭐'.repeat(sale.rating)}` : ''}
+                  {sale.rating ? ` · Baho: ${sale.rating}/5` : ''}
                 </p>
               </div>
               <div className="shrink-0 text-right">

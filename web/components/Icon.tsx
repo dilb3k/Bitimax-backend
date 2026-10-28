@@ -1,5 +1,10 @@
 import type { SVGProps } from "react";
 export type IconName =
+  | "star"
+  | "key"
+  | "refresh"
+  | "alert"
+  | "close"
   | "shield"
   | "arrow"
   | "grid"
@@ -12,6 +17,11 @@ export type IconName =
   | "clock"
   | "logout";
 const paths: Record<IconName, string> = {
+  star: "m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z",
+  key: "M15 3a6 6 0 0 0-5.5 8.4L3 18v3h3v-3h3v-3l2.6-2.6A6 6 0 1 0 15 3Zm2 4h.01",
+  refresh: "M20 7v5h-5M4 17v-5h5M6 6a8 8 0 0 1 14 6M4 12a8 8 0 0 0 14 6",
+  alert: "m12 3 10 18H2L12 3Zm0 6v5m0 3h.01",
+  close: "m6 6 12 12M6 18 18 6",
   shield: "M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3ZM8 12l3 3 5-6",
   arrow: "M4 12h16m-6-6 6 6-6 6",
   grid: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z",

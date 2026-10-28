@@ -184,7 +184,7 @@ async function sendCatalogPage(ctx: any, page: number, edit = false) {
   }
 }
 
-buyerHandler.hears(['🛍 Akkaunt sotib olish', '🛍 Mahsulotlar'], async (ctx) => sendCatalogPage(ctx, 1));
+buyerHandler.hears(["🛍 Akkaunt sotib olish","Akkaunt sotib olish","🛍 Mahsulotlar","Mahsulotlar"], async (ctx) => sendCatalogPage(ctx, 1));
 
 // Real pagination — the old "/next" command only repeated the total count and never actually
 // paged. It's kept as an alias so anyone used to typing it still gets somewhere useful.
@@ -410,7 +410,7 @@ buyerHandler.action(/^reveal_(.+)$/, async (ctx) => {
  * Entry point for a deal the buyer already agreed to off-platform: they type the seller's
  * code and go straight to payment. Nothing about the deal is discoverable without the code.
  */
-buyerHandler.hears(['🔑 Kod bilan sotib olish', '/kod'], async (ctx) => {
+buyerHandler.hears(["🔑 Kod bilan sotib olish","Kod bilan sotib olish","/kod"], async (ctx) => {
   await (ctx as any).scene?.enter(CODE_WIZARD);
 });
 
@@ -425,7 +425,7 @@ buyerHandler.action('deal_abort', async (ctx) => {
  * non-escrow transaction states are now folded in as a paper trail alongside the notifications
  * `scheduler.ts` and the SMS webhook now send for those same events.
  */
-buyerHandler.hears(['📦 Mening buyurtmalarim', '📦 Buyurtmalarim'], async (ctx) => {
+buyerHandler.hears(["📦 Mening buyurtmalarim","Mening buyurtmalarim","📦 Buyurtmalarim","Buyurtmalarim"], async (ctx) => {
   const user = await User.findOne({ telegramId: ctx.from!.id });
   if (!user) return;
 

@@ -60,26 +60,16 @@ startHandler.start(async (ctx) => {
 
   await ctx.replyWithHTML(
     [
-      `<b>🔰 Bitmax — kafil bilan savdo</b>`,
+      `<b>Bitmax — kafil bilan savdo</b>`,
       '',
-      `Bitmax ikki ishni qiladi:`,
+      `<b>Sotib olish:</b> katalogdan akkaunt tanlang.`,
+      `<b>Sotish:</b> e’lon bering yoki kelishilgan xaridor uchun kod yarating.`,
+      `<b>Kodingiz bormi?</b> “Kafil bitim” → “Men sotib olyapman” ni tanlang.`,
       '',
-      `<b>1️⃣ 🛍 Akkaunt bozori</b>`,
-      `Instagram, Telegram, TikTok, o‘yin akkauntlari — katalogdan sotib oling yoki`,
-      `o‘zingiznikini sotuvga qo‘ying.`,
+      `Pul tekshirish vaqtida kafilda saqlanadi. Tasdiqlasangiz yoki tekshirish muddati tugasa, bitim yakunlanadi. Muammo bo‘lsa, muddat ichida qaytarishni so‘rang.`,
       '',
-      `<b>2️⃣ 🤝 Kafil bitim (escrow)</b>`,
-      `Xaridor va sotuvchi allaqachon kelishgan bo‘lsa, Bitmax o‘rtada turadi.`,
-      `Sotuvchi kod oladi, xaridor kodni kiritadi — pul kafilda saqlanadi.`,
-      '',
-      `<b>🛡 Ikkalasida ham himoya bir xil:</b>`,
-      `• Pul siz tasdiqlamaguningizcha sotuvchiga o‘tmaydi`,
-      `• Avval akkauntni tekshirasiz, keyin tasdiqlaysiz`,
-      `• Muammo bo‘lsa — siyosat bo‘yicha qaytariladi`,
-      '',
-      `<b>💰 Komissiya:</b> ${config.platformCommission}% (sotuvchidan, faqat muvaffaqiyatli bitimdan)`,
-      '',
-      `<i>⚠️ Platformadan tashqaridagi kelishuvlarga tizim javob bermaydi.</i>`,
+      `Komissiya: ${config.platformCommission}% — muvaffaqiyatli bitimda sotuvchidan.`,
+      `Buyurtmalar, balans va yordam — pastdagi menyuda.`,
     ].join('\n'),
     keyboardFor(user.role)
   );
@@ -87,42 +77,28 @@ startHandler.start(async (ctx) => {
 
 function helpText(): string {
   return [
-      `<b>❓ Yordam</b>`,
-      '',
-      `<b>🤝 Kafil bitim — kelishilgan savdo</b>`,
-      `Xaridor va sotuvchi bir-birini topgan bo‘lsa, Bitmax faqat kafil bo‘ladi:`,
-      `1. Sotuvchi: “🤝 Kafil bitim” → “Men sotyapman” → 4 ta savol`,
-      `2. Sotuvchi <b>kod</b> oladi va xaridorga yuboradi`,
-      `3. Xaridor: “🤝 Kafil bitim” → “Men sotib olyapman” → kodni kiritadi`,
-      `4. To‘laydi → akkauntni tekshiradi → tasdiqlaydi`,
-      `<i>Katalogda ko‘rinmaydi, moderatsiya kutilmaydi — darhol ishlaydi.</i>`,
-      '',
-      `<b>🛍 Katalogdan sotib olish</b>`,
-      `1. Mahsulotni tanlang → “Sotib olish”`,
-      `2. Ko‘rsatilgan <b>aniq</b> summani kartaga o‘tkazing`,
-      `3. To‘lov avtomatik tasdiqlanadi (bank SMS orqali)`,
-      `4. “🔑 Ma’lumotlarni ochish” tugmasini bosing`,
-      `5. Akkauntni tekshiring → “✅ Tasdiqlayman”`,
-      `6. Faqat shundan keyin parolni o‘zgartiring`,
-      '',
-      `<b>💼 Bozorga sotuvga qo‘yish</b>`,
-      `1. “💼 Akkaunt sotish” ni bosing`,
-      `2. Ma’lumotlarni kiriting (nom, tavsif, narx, kategoriya, login/parol)`,
-      `3. Moderator tasdiqlaydi va e’lon katalogda paydo bo‘ladi`,
-      `4. Xaridor tasdiqlagach yoki ${config.autoReleaseHours} soatdan keyin pul balansingizga tushadi`,
-      '',
-      `<b>⏱ Qaytarish shartlari</b> (ma’lumotni ochgan vaqtdan):`,
-      describeRefundPolicy(),
-      '',
-      `<b>💰 Komissiya:</b> ${config.platformCommission}%`,
-      `<b>💸 Minimal pul yechish:</b> ${formatUzs(config.minPayoutAmount)}`,
-      '',
-    `<b>🆘 Qo‘llab-quvvatlash:</b> ${botApi.supportLink()}`,
+    `<b>Sotib olish</b>`,
+    `1. Katalogdan tanlang yoki “Kafil bitim” orqali kod kiriting.`,
+    `2. To‘lov sahifasidagi ko‘rsatmaga amal qiling. Holat tekshirilayotgan bo‘lsa, qayta pul yubormang.`,
+    `3. To‘lov tasdiqlangach “Ma’lumotlarni ochish” ni bosing.`,
+    `4. Akkauntni tekshiring. Hammasi joyida bo‘lsa “Tasdiqlayman” ni bosing, keyin parolni o‘zgartiring.`,
+    '',
+    `<b>Sotish</b>`,
+    `“Akkaunt sotish” orqali katalogga e’lon bering. Xaridor bilan kelishgan bo‘lsangiz, “Kafil bitim” orqali kod yarating va unga yuboring.`,
+    `Natijani “E’lonlarim”, mablag‘ni “Balans” orqali kuzating.`,
+    '',
+    `<b>Muddat va qaytarish</b>`,
+    `Ma’lumotlar ochilgach tekshirish muddati ${config.autoReleaseHours} soat. Tasdiqlash yoki muddat tugashi bitimni yakunlaydi; ochiq nizo alohida ko‘riladi.`,
+    describeRefundPolicy(),
+    '',
+    `Komissiya: ${config.platformCommission}%. Minimal pul yechish: ${formatUzs(config.minPayoutAmount)}.`,
+    `Formadan chiqish: /cancel. Botni tekshirish: /healt.`,
+    `Yordam: ${botApi.supportLink()}`,
   ].join('\n');
 }
 
 startHandler.help((ctx) => ctx.replyWithHTML(helpText()));
-startHandler.hears('❓ Yordam', (ctx) => ctx.replyWithHTML(helpText()));
+startHandler.hears(["❓ Yordam","Yordam"], (ctx) => ctx.replyWithHTML(helpText()));
 
 async function showBalance(ctx: any) {
   const user = await User.findOne({ telegramId: ctx.from!.id });
@@ -149,7 +125,7 @@ async function showBalance(ctx: any) {
   );
 }
 
-startHandler.hears(['💰 Balans'], showBalance);
+startHandler.hears(["💰 Balans","Balans"], showBalance);
 startHandler.command('balance', showBalance);
 
 startHandler.action('balance_statement', async (ctx) => {
@@ -211,7 +187,7 @@ startHandler.action('payout_request', async (ctx) => {
   await (ctx as any).scene?.enter(PAYOUT_WIZARD);
 });
 
-startHandler.hears('⚙️ Sozlamalar', async (ctx) => {
+startHandler.hears(["⚙️ Sozlamalar","Sozlamalar"], async (ctx) => {
   const user = await User.findOne({ telegramId: ctx.from!.id });
   if (!user) return;
 
@@ -265,12 +241,12 @@ startHandler.action('settings_language', async (ctx) => {
   await ctx.answerCbQuery(user.language === 'uz' ? "O'zbekcha" : 'Русский');
 });
 
-startHandler.hears('🏠 Asosiy menu', async (ctx) => {
+startHandler.hears(["🏠 Asosiy menu","Asosiy menu"], async (ctx) => {
   const user = await User.findOne({ telegramId: ctx.from!.id });
   await ctx.reply('Asosiy menu', keyboardFor(user?.role || 'buyer'));
 });
 
-startHandler.hears('🛡 Admin panel', async (ctx) => {
+startHandler.hears(["🛡 Admin panel","Admin panel"], async (ctx) => {
   const user = await User.findOne({ telegramId: ctx.from!.id });
   if (user?.role !== 'admin' && user?.role !== 'moderator') return;
   await ctx.reply('🛡 Admin paneli', adminMenuKeyboard);

@@ -53,6 +53,10 @@ export async function startBot(): Promise<void> {
 
   // Persisted in Mongo rather than Telegraf's default in-memory Map, so a deploy no longer
   // wipes every half-finished listing wizard and multiple replicas can share state.
+  bot.command(['healt', 'health'], async (ctx) => {
+    await ctx.reply('Bitmax bot ishlayapti.');
+  });
+
   bot.use(session({ store: mongoSessionStore }));
   bot.use(stage.middleware());
 

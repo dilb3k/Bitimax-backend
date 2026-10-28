@@ -69,7 +69,7 @@ export function SettingsView() {
 
         {user.rating !== null && (
           <p className="mt-4 border-t border-line pt-4 text-sm text-muted">
-            Reyting: <span className="tnum text-ink">★ {user.rating.toFixed(1)}</span>{' '}
+            Reyting: <span className="tnum text-ink">{user.rating.toFixed(1)}</span>{' '}
             <span className="text-faint">({user.sellerStats.ratingCount} baho)</span> · Sotilgan:{' '}
             <span className="tnum text-ink">{user.sellerStats.sold}</span>
           </p>
